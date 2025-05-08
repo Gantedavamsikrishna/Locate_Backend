@@ -3,16 +3,12 @@ import http from "http";
 import httpProxy from "http-proxy";
 import userRoutes from "./routes/user";
 import serviceRoutes from "./routes/service";
+import UserController from "./routes/user";
 
 const app = express();
 app.use(express.json());
-
-// Mount routers. (Attach auth middleware as needed per route or globally.)
-app.use("/api", userRoutes);
+new UserController(app);
 app.use("/api", serviceRoutes);
-
-// Apply JWT authentication middleware for all subsequent (protected) routes..
-// app.use(jwtAuthMiddleware);
 
 // ------------------------------------------------------------------
 // LOAD BALANCER SETUP

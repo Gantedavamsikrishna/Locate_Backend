@@ -1,81 +1,135 @@
 import express, { Request, Response } from "express";
 import { pool, executeDbQuery } from "../db";
 
-const router = express.Router();
+class UserController {
+  public router = express.Router();
 
-// Create a new user
-router.post("/users", async (req: Request, res: Response) => {
-  const apiName = "user/create";
-  const port: number = req.socket.localPort!;
-  let conn;
-  try {
-    conn = await pool.getConnection();
-    await conn.beginTransaction();
+  constructor(app: any) {
+    app.use("/api/", this.router);
 
-    await executeDbQuery("CALL GenerateUserId(@id)", [], false, apiName, port, conn);
-    const idRows = await executeDbQuery("SELECT @id as newUserId", [], false, apiName, port, conn);
-    const newUserId = idRows[0]?.newUserId;
-
-    const { city_id, first_name, sur_name, father_name, gender, dob, mobile, alternate_mobile, email, role, address, status, image_url, created_by } = req.body;
-    const insertQuery = `INSERT INTO USERS (CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_AT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())`;
-    const params = [city_id, newUserId, first_name, sur_name, father_name, gender, dob, mobile, alternate_mobile, email, role, address, status, image_url, created_by];
-    const result = await executeDbQuery(insertQuery, params, false, apiName, port, conn);
-    await conn.commit();
-
-    res.json({ status: 1, message: "User created", userId: newUserId, affectedRows: result.affectedRows });
-  } catch (err: any) {
-    if (conn) await conn.rollback();
-    res.json({ status: 0, error: err.toString() });
-  } finally {
-    if (conn) conn.release();
+    this.router.post("users", this.createUser.bind(this));
+    this.router.get("users", this.getAllUsers.bind(this));
+    this.router.get("/usersid", this.getUserById.bind(this));
+    this.router.put("/", this.updateUser.bind(this));
   }
-});
 
-// Get All Users
-router.get("/users", async (req: Request, res: Response) => {
-  const apiName = "user/read-all";
-  const port: number = req.socket?.localPort ?? 3000;
-  const query = "SELECT CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_AT, UPDATED_BY, UPDATED_AT FROM USERS";
-  try {
-    const rows = await executeDbQuery(query, [], false, apiName, port);
-    res.json({ status: rows.length ? 1 : 0, data: rows });
-  } catch (err: any) {
-    res.json({ status: 0, error: err.toString() });
+  async createUser(req: Request, res: Response) {
+    const apiName = "user/create";
+    const port: number = req.socket.localPort!;
+    let conn;
+
+    try {
+      conn = await pool.getConnection();
+      await conn.beginTransaction();
+
+      await executeDbQuery("CALL GenerateUserId(@id)", [], false, apiName, port, conn);
+      const idRows = await executeDbQuery("SELECT @id as newUserId", [], false, apiName, port, conn);
+      const newUserId = idRows[0]?.newUserId;
+
+      const {
+        city_id, first_name, sur_name, father_name,
+        gender, dob, mobile, alternate_mobile,
+        email, role, address, status, image_url, created_by
+      } = req.body;
+
+      const insertQuery = `
+        INSERT INTO USERS (
+          CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME,
+          GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER,
+          EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL,
+          CREATED_BY, CREATED_AT
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())
+      `;
+
+      const params = [
+        city_id, newUserId, first_name, sur_name, father_name,
+        gender, dob, mobile, alternate_mobile, email,
+        role, address, status, image_url, created_by
+      ];
+
+      const result = await executeDbQuery(insertQuery, params, false, apiName, port, conn);
+      await conn.commit();
+
+      res.json({ status: 1, message: "User created", userId: newUserId, affectedRows: result.affectedRows });
+    } catch (err: any) {
+      if (conn) await conn.rollback();
+      res.json({ status: 1, error: err.toString() });
+    } finally {
+      if (conn) conn.release();
+    }
   }
-});
 
-// Get User Details
-router.get("/users/:id", async (req: Request, res: Response) => {
-  const apiName = "user/read";
-  const port: number = req.socket.localPort!;
-  const id: any = req.params.id;
+  async getAllUsers(req: Request, res: Response) {
+    const apiName = "user/read-all";
+    const port: number = req.socket?.localPort ?? 3000;
 
-  const query = "SELECT CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_AT, UPDATED_BY, UPDATED_AT FROM USERS WHERE USER_ID = ?";
-  try {
-    const rows = await executeDbQuery(query, [id], false, apiName, port);
-    res.json({ status: rows.length ? 1 : 0, data: rows });
-  } catch (err: any) {
-    res.json({ status: 0, error: err.toString() });
+    const query = `
+      SELECT CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB,
+             MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS,
+             IMAGE_URL, CREATED_BY, CREATED_AT, UPDATED_BY, UPDATED_AT
+      FROM USERS
+    `;
+
+    try {
+      const rows = await executeDbQuery(query, [], false, apiName, port);
+      res.json({ status:  0, data: rows });
+    } catch (err: any) {
+      res.json({ status: 1, error: err.toString() });
+    }
   }
-});
 
-// Update User
-router.put("/users", async (req: Request, res: Response) => {
-  const apiName = "user/update";
-  const port: number = req.socket.localPort!;
-  const { id, city_id, first_name, sur_name, father_name, gender, dob, mobile, alternate_mobile, email, role, address, status, image_url, edited_by } = req.body;
+  async getUserById(req: Request, res: Response) {
+    const apiName = "user/read";
+    const port: number = req.socket.localPort!;
+    const id = req.query.id;
 
-  const query = ` UPDATE USERS SET CITY_ID = ?, NAME = ?, SURNAME = ?, FATHER_NAME = ?, GENDER = ?, DOB = ?, MOBILE_NUMBER = ?, ALTERNATE_NUMBER = ?, EMAIL = ?, ROLE = ?, ADDRESS = ?, STATUS = ?, IMAGE_URL = ?, UPDATED_BY = ?, UPDATED_AT = NOW() WHERE USER_ID = ?`;
+    const query = `
+      SELECT CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB,
+             MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS,
+             IMAGE_URL, CREATED_BY, CREATED_AT, UPDATED_BY, UPDATED_AT
+      FROM USERS
+      WHERE USER_ID = ?
+    `;
 
-  const params = [ city_id, first_name, sur_name, father_name, gender, dob, mobile, alternate_mobile, email, role, address, status, image_url, edited_by, id ];
-
-  try {
-    const result = await executeDbQuery(query, params, true, apiName, port);
-    res.json({ status: result.affectedRows ? 1 : 0, message: "User updated" });
-  } catch (err: any) {
-    res.json({ status: 0, error: err.toString() });
+    try {
+      const rows = await executeDbQuery(query, [id], false, apiName, port);
+      res.json({ status: 0, data: rows });
+    } catch (err: any) {
+      res.json({ status: 1, error: err.toString() });
+    }
   }
-});
 
+  async updateUser(req: Request, res: Response) {
+    const apiName = "user/update";
+    const port: number = req.socket.localPort!;
 
-export default router;
+    const {
+      id, city_id, first_name, sur_name, father_name,
+      gender, dob, mobile, alternate_mobile, email,
+      role, address, status, image_url, edited_by
+    } = req.body;
+
+    const updateQuery = `
+      UPDATE USERS
+      SET CITY_ID = ?, NAME = ?, SURNAME = ?, FATHER_NAME = ?, GENDER = ?, DOB = ?,
+          MOBILE_NUMBER = ?, ALTERNATE_NUMBER = ?, EMAIL = ?, ROLE = ?, ADDRESS = ?,
+          STATUS = ?, IMAGE_URL = ?, UPDATED_BY = ?, UPDATED_AT = NOW()
+      WHERE USER_ID = ?
+    `;
+
+    const params = [
+      city_id, first_name, sur_name, father_name, gender, dob,
+      mobile, alternate_mobile, email, role, address,
+      status, image_url, edited_by, id
+    ];
+
+    try {
+      const result = await executeDbQuery(updateQuery, params, true, apiName, port);
+      res.json({ status:  0, message: "User updated" });
+    } catch (err: any) {
+      res.json({ status: 1, error: err.toString() });
+    }
+  }
+}
+
+export default UserController;

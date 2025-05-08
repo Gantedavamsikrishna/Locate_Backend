@@ -25,7 +25,7 @@ router.post("/services", async (req: Request, res: Response) => {
     res.json({ status: 1, message: "Service created", serviceId: newId, affectedRows: result.affectedRows });
   } catch (err: any) {
     if (conn) await conn.rollback();
-    res.json({ status: 0, error: err.toString() });
+    res.json({ status: 1, error: err.toString() });
   } finally {
     if (conn) conn.release();
   }
@@ -38,9 +38,9 @@ router.get("/services", async (req: Request, res: Response): Promise<void> => {
   const query = "SELECT CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, CREATED_AT, UPDATED_BY, UPDATED_AT FROM SERVICES";
   try {
     const rows = await executeDbQuery(query, [], false, apiName, port);
-    res.json({ status: rows.length ? 1 : 0, data: rows });
+    res.json({ status:  0, data: rows });
   } catch (err: any) {
-    res.json({ status: 0, error: err.toString() });
+    res.json({ status: 1, error: err.toString() });
   }
 });
 
@@ -55,7 +55,7 @@ router.get("/services/:id", async (req: Request, res: Response) => {
   try { 
     // Pass the id as an array
     const rows = await executeDbQuery(query, [id], false, apiName, port);
-    res.json({ status: rows.length ? 1 : 0, data: rows });
+    res.json({ status:  0, data: rows });
   } catch (err: any) {
     res.status(500).json({ status: 0, error: err.toString() }); 
   }
@@ -72,7 +72,7 @@ router.put("/services", async (req: Request, res: Response) => {
     const result = await executeDbQuery(query, [params], true, apiName, port);
     res.json({ status: result.affectedRows ? 1 : 0, message: "Service updated" });
   } catch (err: any) {
-    res.json({ status: 0, error: err.toString() });
+    res.json({ status: 1, error: err.toString() });
   }
 });
 
