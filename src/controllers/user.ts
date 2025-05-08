@@ -21,9 +21,16 @@ class UserController {
       // conn = await
       let query=`select U.USER_ID, U.NAME, U.EMAIL, R.ROLE_NAME FROM USERS U LEFT JOIN ROLES R ON R.ROLE_ID=U.ROLE WHERE U.EMAIL=? and U.PASSWORD=? `;
       const params=[input.email,input.password];
+      console.log(input);
+      
 let connection = await pool.getConnection();
       const result = await executeDbQuery(query, params, false, apiName);
-      Response.json({ status: 0, result: result });
+      if(result.length>=1){
+        Response.json({ status: 0, result: result });
+      }else{
+      Response.json({ status: 2, result: {message:'user not fund'} });
+
+      }
       
     } catch (err:any) {
       Response.json({ status: 1, result: err.toString()});
