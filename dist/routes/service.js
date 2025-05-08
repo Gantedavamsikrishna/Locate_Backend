@@ -58,21 +58,19 @@ router.get("/services", (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 }));
 // Read service details
-router.get("/services", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/services/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const apiName = "service/read";
     const port = req.socket.localPort;
-    // Convert query parameter to a trimmed string.
-    const id = (req.query.id || "").trim();
-    const query = `SELECT CITY_ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, CREATED_AT, UPDATED_BY, UPDATED_AT FROM SERVICES WHERE ID = ?`;
+    // Extract the id value from req.params
+    const id = (req.params.id || "").trim();
+    const query = ` SELECT CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, CREATED_AT, UPDATED_BY, UPDATED_AT FROM SERVICES WHERE ID = ?`;
     try {
-        // Pass the parameter in an array.
+        // Pass the id as an array
         const rows = yield (0, db_1.executeDbQuery)(query, [id], false, apiName, port);
-        console.log("Rows returned:", rows);
         res.json({ status: rows.length ? 1 : 0, data: rows });
     }
     catch (err) {
-        console.error("Error executing query:", err);
-        res.json({ status: 0, error: err.toString() });
+        res.status(500).json({ status: 0, error: err.toString() });
     }
 }));
 // Update a service
@@ -83,7 +81,7 @@ router.put("/services", (req, res) => __awaiter(void 0, void 0, void 0, function
     const query = `UPDATE SERVICES SET CITY_ID=?, NAME=?, DESCRIPTION=?, IMAGE_URL=?, STATUS=?, UPDATED_BY=?, UPDATED_AT=NOW() WHERE ID = ?`;
     const params = [city_id, service_name, description, image_url, status, edited_by, id];
     try {
-        const result = yield (0, db_1.executeDbQuery)(query, params, true, apiName, port);
+        const result = yield (0, db_1.executeDbQuery)(query, [params], true, apiName, port);
         res.json({ status: result.affectedRows ? 1 : 0, message: "Service updated" });
     }
     catch (err) {

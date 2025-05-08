@@ -17,7 +17,7 @@ router.post("/users", async (req: Request, res: Response) => {
     const newUserId = idRows[0]?.newUserId;
 
     const { city_id, first_name, sur_name, father_name, gender, dob, mobile, alternate_mobile, email, role, address, status, image_url, created_by } = req.body;
-    const insertQuery = `INSERT INTO USERS (CITY_ID, USER_ID, FIRST_NAME, SUR_NAME, FATHER_NAME, GENDER, DOB, MOBILE, ALTERNATE_MOBILE, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_AT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())`;
+    const insertQuery = `INSERT INTO USERS (CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_AT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())`;
     const params = [city_id, newUserId, first_name, sur_name, father_name, gender, dob, mobile, alternate_mobile, email, role, address, status, image_url, created_by];
     const result = await executeDbQuery(insertQuery, params, false, apiName, port, conn);
     await conn.commit();
@@ -35,7 +35,7 @@ router.post("/users", async (req: Request, res: Response) => {
 router.get("/users", async (req: Request, res: Response) => {
   const apiName = "user/read-all";
   const port: number = req.socket?.localPort ?? 3000;
-  const query = "SELECT * FROM USERS";
+  const query = "SELECT CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_AT, UPDATED_BY, UPDATED_AT FROM USERS";
   try {
     const rows = await executeDbQuery(query, [], false, apiName, port);
     res.json({ status: rows.length ? 1 : 0, data: rows });
@@ -45,14 +45,14 @@ router.get("/users", async (req: Request, res: Response) => {
 });
 
 // Get User Details
-router.get("/users", async (req: Request, res: Response) => {
+router.get("/users/:id", async (req: Request, res: Response) => {
   const apiName = "user/read";
   const port: number = req.socket.localPort!;
-  const id: any = req.query.id;
+  const id: any = req.params.id;
 
-  const query = "SELECT * FROM USERS WHERE USER_ID = ?";
+  const query = "SELECT CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_AT, UPDATED_BY, UPDATED_AT FROM USERS WHERE USER_ID = ?";
   try {
-    const rows = await executeDbQuery(query, id, false, apiName, port);
+    const rows = await executeDbQuery(query, [id], false, apiName, port);
     res.json({ status: rows.length ? 1 : 0, data: rows });
   } catch (err: any) {
     res.json({ status: 0, error: err.toString() });
@@ -63,10 +63,11 @@ router.get("/users", async (req: Request, res: Response) => {
 router.put("/users", async (req: Request, res: Response) => {
   const apiName = "user/update";
   const port: number = req.socket.localPort!;
-  const { id, city_id, first_name, sur_name, mobile, email, edited_by } = req.body;
+  const { id, city_id, first_name, sur_name, father_name, gender, dob, mobile, alternate_mobile, email, role, address, status, image_url, edited_by } = req.body;
 
-  const query = `UPDATE USERS SET CITY_ID=?, FIRST_NAME=?, SUR_NAME=?, MOBILE=?, EMAIL=?, UPDATED_BY=?, UPDATED_AT=NOW() WHERE USER_ID = ?`;
-  const params = [city_id, first_name, sur_name, mobile, email, edited_by, id];
+  const query = ` UPDATE USERS SET CITY_ID = ?, NAME = ?, SURNAME = ?, FATHER_NAME = ?, GENDER = ?, DOB = ?, MOBILE_NUMBER = ?, ALTERNATE_NUMBER = ?, EMAIL = ?, ROLE = ?, ADDRESS = ?, STATUS = ?, IMAGE_URL = ?, UPDATED_BY = ?, UPDATED_AT = NOW() WHERE USER_ID = ?`;
+
+  const params = [ city_id, first_name, sur_name, father_name, gender, dob, mobile, alternate_mobile, email, role, address, status, image_url, edited_by, id ];
 
   try {
     const result = await executeDbQuery(query, params, true, apiName, port);
@@ -75,5 +76,6 @@ router.put("/users", async (req: Request, res: Response) => {
     res.json({ status: 0, error: err.toString() });
   }
 });
+
 
 export default router;
