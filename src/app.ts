@@ -1,9 +1,9 @@
 import express from "express";
 import http from "http";
 import httpProxy from "http-proxy";
-import userRoutes from "./routes/user";
-import serviceRoutes from "./routes/service";
-import UserController from "./routes/user";
+import userRoutes from "./controllers/user";
+import serviceRoutes from "./controllers/service";
+import UserController from "./controllers/user";
 
 const app = express();
 app.use(express.json());
