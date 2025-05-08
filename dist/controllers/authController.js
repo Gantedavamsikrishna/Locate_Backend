@@ -36,7 +36,7 @@ exports.register = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void
 }));
 exports.login = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
-    const user = users.find(u => u.email === email);
+    const user = users.find(u => u.email == email);
     if (!user)
         return res.status(404).json({ message: 'User not found' });
     const match = yield bcrypt_1.default.compare(password, user.password);

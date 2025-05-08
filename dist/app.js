@@ -8,16 +8,13 @@ const http_1 = __importDefault(require("http"));
 const http_proxy_1 = __importDefault(require("http-proxy"));
 const user_1 = __importDefault(require("./routes/user"));
 const service_1 = __importDefault(require("./routes/service"));
-const auth_1 = __importDefault(require("./routes/auth"));
-const auth_2 = require("./utils/auth");
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 // Mount routers. (Attach auth middleware as needed per route or globally.)
 app.use("/api", user_1.default);
 app.use("/api", service_1.default);
-app.use('/api/auth', auth_1.default);
 // Apply JWT authentication middleware for all subsequent (protected) routes..
-app.use(auth_2.jwtAuthMiddleware);
+// app.use(jwtAuthMiddleware);
 // ------------------------------------------------------------------
 // LOAD BALANCER SETUP
 // ------------------------------------------------------------------

@@ -3,8 +3,6 @@ import http from "http";
 import httpProxy from "http-proxy";
 import userRoutes from "./routes/user";
 import serviceRoutes from "./routes/service";
-import authRoutes from './routes/auth';
-import { generateToken, jwtAuthMiddleware } from './utils/auth';
 
 const app = express();
 app.use(express.json());
@@ -12,10 +10,9 @@ app.use(express.json());
 // Mount routers. (Attach auth middleware as needed per route or globally.)
 app.use("/api", userRoutes);
 app.use("/api", serviceRoutes);
-app.use('/api/auth', authRoutes);
 
 // Apply JWT authentication middleware for all subsequent (protected) routes..
-app.use(jwtAuthMiddleware);
+// app.use(jwtAuthMiddleware);
 
 // ------------------------------------------------------------------
 // LOAD BALANCER SETUP
