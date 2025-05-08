@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es2016",                                  
+    "module": "commonjs",                                
+    "rootDir": "./src",                   // Specifies the root folder of your TypeScript source files.
+    "outDir": "./dist",                   // Redirects emitted JavaScript files to the "dist" directory.
+    "esModuleInterop": true,                             
+    "forceConsistentCasingInFileNames": true,            
+    "strict": true,                                      
+    "skipLibCheck": true                                
+  },
+  "include": [
+    "src/**/*"                          // Include all files in the source directory.
+  ]
+}
