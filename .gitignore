@@ -14,7 +14,7 @@ out/
 .env.*.local
 
 # Logs
-logs/
+logs/*
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -51,3 +51,6 @@ jest-cache/
 # Optional: Local database files
 *.sqlite
 *.db
+/dist
+/logs
+*.log
