@@ -5,12 +5,14 @@ import userRoutes from "./controllers/user";
 import serviceRoutes from "./controllers/service";
 import UserController from "./controllers/user";
 import NewsFeedController from "./controllers/newsFeed";
+import JobsController from "./controllers/jobs";
 
 const app = express();
 app.use(express.json());
 new UserController(app);
 new serviceRoutes(app)
 new NewsFeedController(app)
+new JobsController(app)
 
 // ------------------------------------------------------------------
 // LOAD BALANCER SETUP
