@@ -94,7 +94,7 @@ export default class ServiceController {
      let connection: any;
     connection = await pool.getConnection();
     await connection.beginTransaction();
-    const chekdup = ` SELECT COUNT(*) as count FROM SERVICES WHERE FEED_HEAD=? AND FEED_MATTER=?`;
+    const chekdup = ` SELECT COUNT(*) as count FROM SERVICES WHERE NAME=? AND DESCRIPTION=?`;
         const dupResult = await executeDbQuery(chekdup, [input.NAME, input.DESCRIPTION], false, apiName, port, connection);
         if (Number(dupResult[0]?.count) > 0) {
             await connection.rollback();
