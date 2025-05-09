@@ -24,17 +24,21 @@ export default class ServiceController {
 
       const rows = await executeDbQuery( "SELECT MAX(CAST(ID AS UNSIGNED)) AS maxId FROM SERVICES", [], false, apiName, port, connection );
       const newId = (Number(rows[0]?.maxId || 0) + 1).toString().padStart(3, '0');
+      console.log('maxid :',rows[0]?.maxId );
+      
+console.log('newId',newId);
 
-      const insertQuery = ` INSERT INTO SERVICES (CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, CREATED_AT) VALUES (?, ?, ?, ?, ?, ?, ?, NOW()) `;
-      const params = [input.city_id, newId, input.service_name, input.description, input.image_url, input.status, input.created_by];
+      const insertQuery = ` INSERT INTO SERVICES ( ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, CREATED_AT) VALUES ( ?, ?, ?, ?, ?, ?, NOW()) `;
+      const params = [ newId, input.NAME, input.DESCRIPTION, input.IMAGE_URL, input.STATUS, input.CREATED_BY];
 
       const result = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
       await connection.commit();
-      res.json({ status: 1, message: "Service created", serviceId: newId, affectedRows: result.affectedRows });
+      const results={message: "Service created", serviceId: newId, affectedRows: result.affectedRows}
+      res.json({ status: 0, result:results });
 
     } catch (err: any) {
       if (connection) await connection.rollback();
-      res.json({ status: 0, error: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     } finally {
       if (connection) connection.release();
     }
@@ -47,9 +51,9 @@ export default class ServiceController {
 
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
-      res.json({ status: 0, data: rows });
+      res.json({ status: 0, result: rows });
     } catch (err: any) {
-      res.json({ status: 1, error: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     }
   }
 
@@ -61,9 +65,9 @@ export default class ServiceController {
 
     try {
       const rows = await executeDbQuery(query, [id], false, apiName, port);
-      res.json({ status: 0, data: rows });
+      res.json({ status: 0, result: rows });
     } catch (err: any) {
-      res.status(500).json({ status: 0, error: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     }
   }
 
@@ -71,12 +75,13 @@ export default class ServiceController {
     const apiName = "service/update";
     const port = req.socket.localPort!;
     let input = req.body;
-    const query = ` UPDATE SERVICES SET CITY_ID = ?, NAME = ?, DESCRIPTION = ?, IMAGE_URL = ?, STATUS = ?, UPDATED_BY = ?, UPDATED_AT = NOW() WHERE ID = ? `;
-    const params = [input.city_id, input.service_name, input.description, input.image_url, input.status, input.updated_by, input.id];
+    const query = ` UPDATE SERVICES SET  NAME = ?, DESCRIPTION = ?, IMAGE_URL = ?, STATUS = ?, UPDATED_BY = ?, UPDATED_AT = NOW() WHERE ID = ? `;
+    const params = [ input.NAME, input.DESCRIPTION, input.IMAGE_URL, input.STATUS, input.CREATED_BY, input.ID];
 
     try {
       const result = await executeDbQuery(query, params, true, apiName, port);
-      res.json({ status: result.affectedRows ? 1 : 0, message: "Service updated" });
+      const results={ message: "Service updated"}
+      res.json({ status:  0, result:results });
     } catch (err: any) {
       res.json({ status: 1, error: err.toString() });
     }
