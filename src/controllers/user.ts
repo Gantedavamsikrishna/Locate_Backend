@@ -7,10 +7,10 @@ class UserController {
 
   constructor(app: any) {
     app.use("/api/", this.router);
-    this.router.post("users", this.createUser.bind(this));
-    this.router.get("users", this.getAllUsers.bind(this));
-    this.router.get("/usersid", this.getUserById.bind(this));
-    this.router.put("/", this.updateUser.bind(this));
+    this.router.post("/users", this.createUser.bind(this));
+    this.router.get("/users", this.getAllUsers.bind(this));
+    this.router.get("/usersbyid", this.getUserById.bind(this));
+    this.router.put("/users", this.updateUser.bind(this));
     this.router.post("/login", this.Login.bind(this));
   }
 
