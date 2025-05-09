@@ -6,7 +6,7 @@ class UserController {
   public router = express.Router();
 
   constructor(app: any) {
-    app.use("/api/", this.router);
+    app.use("/api/user", this.router);
     this.router.post("/users", this.createUser.bind(this));
     this.router.get("/users", this.getAllUsers.bind(this));
     this.router.get("/usersbyid", this.getUserById.bind(this));

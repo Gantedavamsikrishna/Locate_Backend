@@ -5,12 +5,11 @@ export default class ServiceController {
   public router = express.Router();
 
   constructor(app: Application) {
-    app.use("/api/", this.router);
-
-    this.router.post("/services", this.createService.bind(this));
+    app.use("/api/service", this.router);
     this.router.get("/services", this.getAllServices.bind(this));
-    this.router.get("/servicesbyid", this.getServiceById.bind(this));
+    this.router.post("/services", this.createService.bind(this));
     this.router.put("/services", this.updateService.bind(this));
+    this.router.get("/servicesbyid", this.getServiceById.bind(this));
   }
 
   async createService(req: Request, res: Response) {
@@ -44,7 +43,7 @@ export default class ServiceController {
   async getAllServices(req: Request, res: Response) {
     const apiName = "service/read-all";
     const port = req.socket.localPort!;
-    const query = ` SELECT CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, CREATED_AT, UPDATED_BY, UPDATED_AT FROM SERVICES `;
+    const query = ` SELECT  ID, NAME, DESCRIPTION, IMAGE_URL, STATUS FROM SERVICES `;
 
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
