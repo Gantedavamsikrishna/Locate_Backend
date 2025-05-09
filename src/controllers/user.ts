@@ -13,13 +13,17 @@ class UserController {
     this.router.get("/usersbyid", this.getUserById.bind(this));
     this.router.put("/users", this.updateUser.bind(this));
     this.router.post("/login", this.Login.bind(this));
+
+    this.router.post("/roles", this.createRole.bind(this));
+    this.router.get("/roles", this.getAllRoles.bind(this));
+    this.router.put("/roles", this.updateRole.bind(this));
   }
 
   async Login(Request: Request, Response: Response) {
     const apiName = "user/Login";
     let input=Request.body;
     try {
-      // conn = await
+      
       let query=`select U.USER_ID, U.NAME, U.EMAIL, R.ROLE_NAME FROM USERS U LEFT JOIN ROLES R ON R.ROLE_ID=U.ROLE WHERE U.EMAIL=? and U.PASSWORD=? `;
       const params=[input.email,input.password];
       
@@ -105,6 +109,50 @@ class UserController {
       res.json({ status: 1, error: err.toString() });
     }
   }
+
+//----------------------Role End Points----------------------------//
+  async createRole(req: Request, res: Response) {
+    const apiName = "role/create"; const port = req.socket.localPort!; const input = req.body; let connection;
+    try {
+      connection = await pool.getConnection(); await connection.beginTransaction();
+      const maxIdResult = await executeDbQuery("SELECT IFNULL(MAX(ROLE_ID), 1110) AS maxId FROM ROLES", [], false, apiName, port, connection);
+      const newId = Number(maxIdResult[0]?.maxId || 1110) + 1;
+      const insertQuery = `INSERT INTO ROLES (CITY_ID, ROLE_ID, ROLE_NAME, DESCRIPTION, STATUS, CREATED_BY, CREATED_AT) VALUES (?, ?, ?, ?, ?, ?, NOW())`;
+      const params = [input.city_id, newId, input.role_name, input.description, input.status, input.created_by];
+      const result = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
+      await connection.commit();
+      res.json({ status: 1, message: "Role created", roleId: newId, affectedRows: result.affectedRows });
+    } catch (err: any) {
+      if (connection) await connection.rollback(); res.json({ status: 0, error: err.toString() });
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+  async getAllRoles(req: Request, res: Response) {
+    const apiName = "role/read-all"; const port = req.socket.localPort!;
+    const query = `SELECT CITY_ID, ROLE_ID, ROLE_NAME, DESCRIPTION, STATUS, CREATED_AT, CREATED_BY, UPDATED_AT, UPDATED_BY, UPDATED_AT FROM ROLES`;
+    try {
+      const rows = await executeDbQuery(query, [], false, apiName, port);
+      res.json({ status: 1, data: rows });
+    } catch (err: any) {
+      res.json({ status: 0, error: err.toString() });
+    }
+  }
+
+
+  async updateRole(req: Request, res: Response) {
+    const apiName = "role/update"; const port = req.socket.localPort!; const input = req.body;
+    const query = `UPDATE ROLES SET CITY_ID = ?, ROLE_NAME = ?, DESCRIPTION = ?, STATUS = ?, UPDATED_BY = ?, UPDATED_AT = NOW() WHERE ROLE_ID = ?`;
+    const params = [input.city_id, input.role_name, input.description, input.status, input.updated_by, input.role_id];
+    try {
+      const result = await executeDbQuery(query, params, true, apiName, port);
+      res.json({ status: 0, message: "Role updated"});
+    } catch (err: any) {
+      res.json({ status: 0, error: err.toString() });
+    }
+  }
+
 }
 
 export default UserController;

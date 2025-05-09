@@ -6,10 +6,18 @@ export default class ServiceController {
 
   constructor(app: Application) {
     app.use("/api/service", this.router);
+
     this.router.get("/services", this.getAllServices.bind(this));
     this.router.post("/services", this.createService.bind(this));
     this.router.put("/services", this.updateService.bind(this));
     this.router.get("/servicesbyid", this.getServiceById.bind(this));
+
+    this.router.get("/subservices", this.getAllServices.bind(this));
+    this.router.post("/subservices", this.createService.bind(this));
+    this.router.put("/subservices", this.updateService.bind(this));
+    this.router.get("/subservicesbyid", this.getServiceById.bind(this));
+
+    
   }
 
   async createService(req: Request, res: Response) {
@@ -80,10 +88,82 @@ console.log('newId',newId);
 
     try {
       const result = await executeDbQuery(query, params, true, apiName, port);
-      const results={ message: "Service updated"}
+       const results={ message: "Service updated"}
       res.json({ status:  0, result:results });
     } catch (err: any) {
       res.json({ status: 1, error: err.toString() });
+    }
+  }
+
+  //----------------------------Sub Service End Points------------------------//
+  async createSubService(req: Request, res: Response) {
+    const apiName = "subservice/create";
+    const port = req.socket.localPort!;
+    let input = req.body;
+    let connection;
+
+    try {
+      connection = await pool.getConnection();
+      await connection.beginTransaction();
+
+      const rows = await executeDbQuery("SELECT MAX(CAST(SUB_SERVICE_ID AS UNSIGNED)) AS maxId FROM SUB_SERVICES", [], false, apiName, port, connection);
+      const newId = (Number(rows[0]?.maxId || 0) + 1).toString().padStart(4, '0');
+
+      const insertQuery = ` INSERT INTO SUB_SERVICES (CITY_ID, SUB_SERVICE_ID, SUB_SERVICES_NAME, BUSINESS_NAME, OWNER_NAME, BUSINESS_TYPE, MOBILE, ADDRESS, WEEKDAY_TIMINGS, SUNDAY_TIMINGS, WEBSITE_URL, EMAIL, DESCRIPTION, LATITUDE, LONGITUDE, DEFAULT_CONTACT, IMAGE_URL1, IMAGE_URL2, IMAGE_URL3, IMAGE_URL4, IMAGE_URL5, CREATED_BY, CREATED_ON) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
+        
+      const params = [ input.city_id, newId, input.sub_services_name, input.business_name, input.owner_name, input.business_type, input.mobile, input.address, input.weekday_timings, input.sunday_timings, input.website_url, input.email, input.description, input.latitude, input.longitude, input.default_contact, input.image_url1, input.image_url2, input.image_url3, input.image_url4, input.image_url5, input.created_by ];
+
+      const result = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
+      await connection.commit();
+      res.json({ status: 1, message: "Sub-service created", subServiceId: newId, affectedRows: result.affectedRows });
+    } catch (err: any) {
+      if (connection) await connection.rollback();
+      res.json({ status: 0, error: err.toString() });
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+  async getAllSubServices(req: Request, res: Response) {
+    const apiName = "subservice/read-all";
+    const port = req.socket.localPort!;
+    const query = ` SELECT CITY_ID, SUB_SERVICE_ID, SUB_SERVICES_NAME, BUSINESS_NAME, OWNER_NAME, BUSINESS_TYPE, MOBILE, ADDRESS, WEEKDAY_TIMINGS, SUNDAY_TIMINGS, WEBSITE_URL, EMAIL, DESCRIPTION, LATITUDE, LONGITUDE, DEFAULT_CONTACT, IMAGE_URL1, IMAGE_URL2, IMAGE_URL3, IMAGE_URL4, IMAGE_URL5, CREATED_BY, CREATED_ON, EDITED_BY, EDITED_ON FROM SUB_SERVICES`;
+
+    try {
+      const rows = await executeDbQuery(query, [], false, apiName, port);
+      res.json({ status: 1, data: rows });
+    } catch (err: any) {
+      res.json({ status: 0, error: err.toString() });
+    }
+  }
+
+  async getSubServiceById(req: Request, res: Response) {
+    const apiName = "subservice/read";
+    const port = req.socket.localPort!;
+    const subServiceId = req.query.id || "";
+    const query = ` SELECT CITY_ID, SUB_SERVICE_ID, SUB_SERVICES_NAME, BUSINESS_NAME, OWNER_NAME, BUSINESS_TYPE, MOBILE, ADDRESS, WEEKDAY_TIMINGS, SUNDAY_TIMINGS, WEBSITE_URL, EMAIL, DESCRIPTION, LATITUDE, LONGITUDE, DEFAULT_CONTACT, IMAGE_URL1, IMAGE_URL2, IMAGE_URL3, IMAGE_URL4, IMAGE_URL5, CREATED_BY, CREATED_ON, EDITED_BY, EDITED_ON FROM SUB_SERVICES WHERE SUB_SERVICE_ID = ?`;
+
+    try {
+      const rows = await executeDbQuery(query, [subServiceId], false, apiName, port);
+      res.json({ status: 1, data: rows });
+    } catch (err: any) {
+      res.status(500).json({ status: 0, error: err.toString() });
+    }
+  }
+
+  async updateSubService(req: Request, res: Response) {
+    const apiName = "subservice/update";
+    const port = req.socket.localPort!;
+    let input = req.body;
+    const query = ` UPDATE SUB_SERVICES SET CITY_ID = ?, SUB_SERVICES_NAME = ?, BUSINESS_NAME = ?, OWNER_NAME = ?, BUSINESS_TYPE = ?, MOBILE = ?, ADDRESS = ?, WEEKDAY_TIMINGS = ?, SUNDAY_TIMINGS = ?, WEBSITE_URL = ?, EMAIL = ?, DESCRIPTION = ?, LATITUDE = ?, LONGITUDE = ?, DEFAULT_CONTACT = ?, IMAGE_URL1 = ?, IMAGE_URL2 = ?, IMAGE_URL3 = ?, IMAGE_URL4 = ?, IMAGE_URL5 = ?, EDITED_BY = ?, EDITED_ON = NOW() WHERE SUB_SERVICE_ID = ?`;
+
+    const params = [ input.city_id, input.sub_services_name, input.business_name, input.owner_name, input.business_type, input.mobile, input.address, input.weekday_timings, input.sunday_timings, input.website_url, input.email, input.description, input.latitude, input.longitude, input.default_contact, input.image_url1, input.image_url2, input.image_url3, input.image_url4, input.image_url5, input.edited_by, input.sub_service_id ];
+
+    try {
+      const result = await executeDbQuery(query, params, true, apiName, port);
+      res.json({ status: 0, message: "Sub-service updated"});
+    } catch (err: any) {
+      res.json({ status: 0, error: err.toString() });
     }
   }
 }

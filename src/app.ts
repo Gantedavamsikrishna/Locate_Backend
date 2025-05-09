@@ -4,11 +4,13 @@ import httpProxy from "http-proxy";
 import userRoutes from "./controllers/user";
 import serviceRoutes from "./controllers/service";
 import UserController from "./controllers/user";
+import NewsFeedController from "./controllers/newsFeed";
 
 const app = express();
 app.use(express.json());
 new UserController(app);
 new serviceRoutes(app)
+new NewsFeedController(app)
 
 // ------------------------------------------------------------------
 // LOAD BALANCER SETUP
