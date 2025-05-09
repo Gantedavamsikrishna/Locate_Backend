@@ -31,7 +31,7 @@ export default class ServiceController {
       connection = await pool.getConnection();
       await connection.beginTransaction();
 
-      const chekdup = ` SELECT COUNT(*) as count NAME, DESCRIPTION FROM SERVICES WHERE NAME=? AND DESCRIPTION=?`;
+      const chekdup = ` SELECT COUNT(*) as count FROM SERVICES WHERE NAME=? AND DESCRIPTION=?`;
         const dupResult = await executeDbQuery(chekdup, [input.NAME, input.DESCRIPTION], false, apiName, port, connection);
         if (Number(dupResult[0]?.count) > 0) {
             await connection.rollback();
@@ -94,7 +94,7 @@ export default class ServiceController {
      let connection: any;
     connection = await pool.getConnection();
     await connection.beginTransaction();
-    const chekdup = ` SELECT COUNT(*) as count NAME, DESCRIPTION FROM SERVICES WHERE FEED_HEAD=? AND FEED_MATTER=?`;
+    const chekdup = ` SELECT COUNT(*) as count FROM SERVICES WHERE FEED_HEAD=? AND FEED_MATTER=?`;
         const dupResult = await executeDbQuery(chekdup, [input.NAME, input.DESCRIPTION], false, apiName, port, connection);
         if (Number(dupResult[0]?.count) > 0) {
             await connection.rollback();
@@ -125,7 +125,7 @@ export default class ServiceController {
       connection = await pool.getConnection();
       await connection.beginTransaction();
 
-      const chekdup = ` SELECT COUNT(*) as count SUB_SERVICES_NAME, BUSINESS_NAME FROM SUB_SERVICES WHERE SUB_SERVICES_NAME=? AND BUSINESS_NAME=?`;
+      const chekdup = ` SELECT COUNT(*) as count FROM SUB_SERVICES WHERE SUB_SERVICES_NAME=? AND BUSINESS_NAME=?`;
         const dupResult = await executeDbQuery(chekdup, [input.sub_services_name, input.business_name], false, apiName, port, connection);
         if (Number(dupResult[0]?.count) > 0) {
             await connection.rollback();
@@ -192,7 +192,7 @@ export default class ServiceController {
     connection = await pool.getConnection();
       await connection.beginTransaction();
 
-      const chekdup = ` SELECT COUNT(*) as count SUB_SERVICES_NAME, BUSINESS_NAME FROM SUB_SERVICES WHERE SUB_SERVICES_NAME=? AND BUSINESS_NAME=?`;
+      const chekdup = ` SELECT COUNT(*) as count FROM SUB_SERVICES WHERE SUB_SERVICES_NAME=? AND BUSINESS_NAME=?`;
         const dupResult = await executeDbQuery(chekdup, [input.sub_services_name, input.business_name], false, apiName, port, connection);
         if (Number(dupResult[0]?.count) > 0) {
             await connection.rollback();

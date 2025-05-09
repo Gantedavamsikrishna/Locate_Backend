@@ -51,7 +51,7 @@ class UserController {
     connection = await pool.getConnection();
     await connection.beginTransaction();
     
-      const chekdup = ` SELECT COUNT(*) as count EMAIL, MOBILE_NUMBER FROM USERS WHERE EMAIL=? AND MOBILE_NUMBER=?`;
+      const chekdup = ` SELECT COUNT(*) as count FROM USERS WHERE EMAIL=? AND MOBILE_NUMBER=?`;
           const dupResult = await executeDbQuery(chekdup, [input.email, input.mobile], false, apiName, port, connection);
           if (Number(dupResult[0]?.count) > 0) {
               await connection.rollback();
@@ -114,7 +114,7 @@ class UserController {
     connection = await pool.getConnection();
       await connection.beginTransaction();
 
-    const chekdup = ` SELECT COUNT(*) as count EMAIL, MOBILE_NUMBER FROM USERS WHERE EMAIL=? AND MOBILE_NUMBER=?`;
+    const chekdup = ` SELECT COUNT(*) as count FROM USERS WHERE EMAIL=? AND MOBILE_NUMBER=?`;
           const dupResult = await executeDbQuery(chekdup, [input.email, input.mobile], false, apiName, port, connection);
           if (Number(dupResult[0]?.count) > 0) {
               await connection.rollback();
@@ -140,7 +140,7 @@ class UserController {
     try {
       connection = await pool.getConnection(); await connection.beginTransaction();
 
-       const chekdup = ` SELECT COUNT(*) as count ROLE_NAME, DESCRIPTION FROM ROLES WHERE ROLE_NAME=? AND DESCRIPTION=?`;
+       const chekdup = ` SELECT COUNT(*) as count FROM ROLES WHERE ROLE_NAME=? AND DESCRIPTION=?`;
           const dupResult = await executeDbQuery(chekdup, [input.role_name, input.description], false, apiName, port, connection);
           if (Number(dupResult[0]?.count) > 0) {
               await connection.rollback();
@@ -180,7 +180,7 @@ class UserController {
     let connection: any;
     connection = await pool.getConnection();
       await connection.beginTransaction();
-    const chekdup = ` SELECT COUNT(*) as count ROLE_NAME, DESCRIPTION FROM ROLES WHERE ROLE_NAME=? AND DESCRIPTION=?`;
+    const chekdup = ` SELECT COUNT(*) as count FROM ROLES WHERE ROLE_NAME=? AND DESCRIPTION=?`;
           const dupResult = await executeDbQuery(chekdup, [input.role_name, input.description], false, apiName, port, connection);
           if (Number(dupResult[0]?.count) > 0) {
               await connection.rollback();
