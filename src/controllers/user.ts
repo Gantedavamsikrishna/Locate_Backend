@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import { pool, executeDbQuery } from "../db";
 import { request } from "http";
+import { uploadImage } from "../utils/cloudinaryUtil";
 
 class UserController {  
   public router = express.Router();
@@ -54,10 +55,10 @@ class UserController {
     
     const idRows = await executeDbQuery("SELECT @id as newUserId", [], false, apiName, port, connection);
     const newUserId = idRows[0]?.newUserId;
-    
+    const image_url = await uploadImage(input.image_url);
     const insertQuery = ` INSERT INTO USERS ( CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_AT ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())`;
       
-    const params = [ input.city_id, newUserId, input.first_name, input.sur_name, input.father_name, input.gender, input.dob, input.mobile, input.alternate_mobile, input.email, input.role, input.address, input.status, input.image_url, input.created_by ];
+    const params = [ input.city_id, newUserId, input.first_name, input.sur_name, input.father_name, input.gender, input.dob, input.mobile, input.alternate_mobile, input.email, input.role, input.address, input.status, image_url, input.created_by ];
       
     const result = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
     await connection.commit();
@@ -101,8 +102,9 @@ class UserController {
     const apiName = "user/update";
     const port: number = req.socket.localPort!;
     let input=req.body;
+    const image_url = await uploadImage(input.image_url);
     const updateQuery = "UPDATE USERS SET CITY_ID = ?, NAME = ?, SURNAME = ?, FATHER_NAME = ?, GENDER = ?, DOB = ?, MOBILE_NUMBER = ?, ALTERNATE_NUMBER = ?, EMAIL = ?, ROLE = ?, ADDRESS = ?, STATUS = ?, IMAGE_URL = ?, UPDATED_BY = ?, UPDATED_AT = NOW() WHERE USER_ID = ?";
-    const params = [ input.city_id, input.first_name, input.sur_name, input.father_name, input.gender, input.dob, input.mobile, input.alternate_mobile, input.email, input.role, input.address, input.status, input.image_url, input.updated_by, input.id ];
+    const params = [ input.city_id, input.first_name, input.sur_name, input.father_name, input.gender, input.dob, input.mobile, input.alternate_mobile, input.email, input.role, input.address, input.status, image_url, input.updated_by, input.id ];
     try {
       const result = await executeDbQuery(updateQuery, params, true, apiName, port);
       const results = {message: "User updated"}

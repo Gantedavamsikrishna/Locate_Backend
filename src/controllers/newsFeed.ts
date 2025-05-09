@@ -1,5 +1,6 @@
 import express, { Request, Response, Application } from "express";
 import { pool, executeDbQuery } from "../db";
+import { uploadImage } from "../utils/cloudinaryUtil";
 
 export default class NewsFeedController {
   public router = express.Router();
@@ -25,9 +26,9 @@ export default class NewsFeedController {
 
       const result = await executeDbQuery( "SELECT MAX(CAST(SUBSTRING(FEED_ID, 5) AS UNSIGNED)) AS maxId FROM NEWS_FEED", [], false, apiName, port, connection );
       const newId = "FEED" + String((Number(result[0]?.maxId || 0) + 1)).padStart(3, "0");
-
+    const image_url = await uploadImage(input.IMAGE_URL);
       const insertQuery = ` INSERT INTO NEWS_FEED (CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, FEED_DATE, STATUS, FEEDAPP_STATUS, CREATED_BY, CREATED_ON) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW()) `;
-      const params = [ input.city_id, newId, input.feed_head, input.feed_matter, input.image_url, input.feed_date, input.status, input.feedapp_status, input.created_by ];
+      const params = [ input.city_id, newId, input.feed_head, input.feed_matter, image_url, input.feed_date, input.status, input.feedapp_status, input.created_by ];
 
       const insertResult = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
       await connection.commit();
@@ -72,9 +73,9 @@ export default class NewsFeedController {
     const apiName = "newsfeed/update";
     const port = req.socket.localPort!;
     const input = req.body;
-
+    const image_url = await uploadImage(input.IMAGE_URL);
     const updateQuery = ` UPDATE NEWS_FEED SET CITY_ID = ?, FEED_HEAD = ?, FEED_MATTER = ?, IMAGE_URL = ?, FEED_DATE = ?, STATUS = ?, FEEDAPP_STATUS = ?, EDITED_BY = ?, EDITED_ON = NOW() WHERE FEED_ID = ? `;
-    const params = [ input.city_id, input.feed_head, input.feed_matter, input.image_url, input.feed_date, input.status, input.feedapp_status, input.edited_by, input.feed_id ];
+    const params = [ input.city_id, input.feed_head, input.feed_matter, image_url, input.feed_date, input.status, input.feedapp_status, input.edited_by, input.feed_id ];
 
     try {
       const result = await executeDbQuery(updateQuery, params, true, apiName, port);

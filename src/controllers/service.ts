@@ -1,5 +1,6 @@
 import express, { Request, Response, Application } from "express";
 import { pool, executeDbQuery } from "../db";
+import { uploadImage } from "../utils/cloudinaryUtil";
 
 export default class ServiceController {
   public router = express.Router();
@@ -33,9 +34,10 @@ export default class ServiceController {
       const rows = await executeDbQuery( "SELECT MAX(CAST(ID AS UNSIGNED)) AS maxId FROM SERVICES", [], false, apiName, port, connection );
       const newId = (Number(rows[0]?.maxId || 0) + 1).toString().padStart(3, '0');
       console.log('maxid :',rows[0]?.maxId );
+      const image_url = await uploadImage(input.IMAGE_URL);
       
       const insertQuery = ` INSERT INTO SERVICES ( ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, CREATED_AT) VALUES ( ?, ?, ?, ?, ?, ?, NOW()) `;
-      const params = [ newId, input.NAME, input.DESCRIPTION, input.IMAGE_URL, input.STATUS, input.CREATED_BY];
+      const params = [ newId, input.NAME, input.DESCRIPTION, image_url, input.STATUS, input.CREATED_BY];
 
       const result = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
       await connection.commit();
@@ -81,8 +83,9 @@ export default class ServiceController {
     const apiName = "service/update";
     const port = req.socket.localPort!;
     let input = req.body;
+    const image_url = await uploadImage(input.IMAGE_URL);
     const query = ` UPDATE SERVICES SET  NAME = ?, DESCRIPTION = ?, IMAGE_URL = ?, STATUS = ?, UPDATED_BY = ?, UPDATED_AT = NOW() WHERE ID = ? `;
-    const params = [ input.NAME, input.DESCRIPTION, input.IMAGE_URL, input.STATUS, input.CREATED_BY, input.ID];
+    const params = [ input.NAME, input.DESCRIPTION, image_url, input.STATUS, input.CREATED_BY, input.ID];
 
     try {
       const result = await executeDbQuery(query, params, true, apiName, port);
