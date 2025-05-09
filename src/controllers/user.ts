@@ -61,10 +61,11 @@ class UserController {
       
     const result = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
     await connection.commit();
-    res.json({ status: 1, message: "User created", userId: newUserId, affectedRows: result.affectedRows });
+    const results = {message: "User created", userId: newUserId, affectedRows: result.affectedRows}
+    res.json({ status: 0, result:results });  
   } catch (err: any) {
     if (connection) await connection.rollback();
-    res.json({ status: 0, error: err.toString() });
+    res.json({ status: 1, result: err.toString() });
   } finally {
     if (connection) connection.release();
   }
@@ -77,9 +78,9 @@ class UserController {
     const query = "SELECT CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_AT, UPDATED_BY, UPDATED_AT FROM USERS";
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
-      res.json({ status: 0, data: rows });
+      res.json({ status: 0, result: rows });
     } catch (err: any) {
-      res.json({ status: 1, error: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     }
   }
 
@@ -90,9 +91,9 @@ class UserController {
     const query = "SELECT CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_AT, UPDATED_BY, UPDATED_AT FROM USERS WHERE USER_ID = ?";
     try {
       const rows = await executeDbQuery(query, [id], false, apiName, port);
-      res.json({ status: 0, data: rows });
+      res.json({ status: 0, result: rows });
     } catch (err: any) {
-      res.json({ status: 1, error: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     }
   }
 
@@ -104,9 +105,10 @@ class UserController {
     const params = [ input.city_id, input.first_name, input.sur_name, input.father_name, input.gender, input.dob, input.mobile, input.alternate_mobile, input.email, input.role, input.address, input.status, input.image_url, input.updated_by, input.id ];
     try {
       const result = await executeDbQuery(updateQuery, params, true, apiName, port);
-      res.json({ status: 0, message: "User updated" });
+      const results = {message: "User updated"}
+      res.json({ status: 0, result:results });
     } catch (err: any) {
-      res.json({ status: 1, error: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     }
   }
 
@@ -121,9 +123,10 @@ class UserController {
       const params = [input.city_id, newId, input.role_name, input.description, input.status, input.created_by];
       const result = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
       await connection.commit();
-      res.json({ status: 1, message: "Role created", roleId: newId, affectedRows: result.affectedRows });
+      const results = {message: "Role created", roleId: newId, affectedRows: result.affectedRows};
+      res.json({ status: 0, results:result });
     } catch (err: any) {
-      if (connection) await connection.rollback(); res.json({ status: 0, error: err.toString() });
+      if (connection) await connection.rollback(); res.json({ status: 1, result: err.toString() });
     } finally {
       if (connection) connection.release();
     }
@@ -134,9 +137,9 @@ class UserController {
     const query = `SELECT CITY_ID, ROLE_ID, ROLE_NAME, DESCRIPTION, STATUS, CREATED_AT, CREATED_BY, UPDATED_AT, UPDATED_BY, UPDATED_AT FROM ROLES`;
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
-      res.json({ status: 1, data: rows });
+      res.json({ status: 0, result: rows });
     } catch (err: any) {
-      res.json({ status: 0, error: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     }
   }
 
@@ -147,9 +150,10 @@ class UserController {
     const params = [input.city_id, input.role_name, input.description, input.status, input.updated_by, input.role_id];
     try {
       const result = await executeDbQuery(query, params, true, apiName, port);
-      res.json({ status: 0, message: "Role updated"});
+      const results = {message: "Role updated"};
+      res.json({ status: 0, result:results });
     } catch (err: any) {
-      res.json({ status: 0, error: err.toString() });
+      res.json({ status: 1, error: err.toString() });
     }
   }
 

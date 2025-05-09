@@ -31,11 +31,11 @@ export default class NewsFeedController {
 
       const insertResult = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
       await connection.commit();
-
-      res.json({ status: 1, message: "News feed created", feedId: newId, affectedRows: insertResult.affectedRows, });
+     const results = {message: "News feed created", feedId: newId, affectedRows: insertResult.affectedRows};
+      res.json({ status: 0, result:results });
     } catch (err: any) {
       if (connection) await connection.rollback();
-      res.json({ status: 0, error: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     } finally {
       if (connection) connection.release();
     }
@@ -48,9 +48,9 @@ export default class NewsFeedController {
 
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
-      res.json({ status: 1, data: rows });
+      res.json({ status: 0, result: rows });
     } catch (err: any) {
-      res.json({ status: 0, error: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     }
   }
 
@@ -62,9 +62,9 @@ export default class NewsFeedController {
 
     try {
       const rows = await executeDbQuery(query, [feedId], false, apiName, port);
-      res.json({ status: 1, data: rows });
+      res.json({ status: 0, result: rows });
     } catch (err: any) {
-      res.status(500).json({ status: 0, error: err.toString() });
+      res.status(500).json({ status: 1, result: err.toString() });
     }
   }
 
@@ -78,10 +78,10 @@ export default class NewsFeedController {
 
     try {
       const result = await executeDbQuery(updateQuery, params, true, apiName, port);
-      res.json({ status: 0, message: "News feed updated",
-      });
+      const results = {message: "News feed updated"};
+      res.json({ status: 0, result:results });
     } catch (err: any) {
-      res.json({ status: 0, error: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     }
   }
 }

@@ -12,10 +12,10 @@ export default class ServiceController {
     this.router.put("/services", this.updateService.bind(this));
     this.router.get("/servicesbyid", this.getServiceById.bind(this));
 
-    this.router.get("/subservices", this.getAllServices.bind(this));
-    this.router.post("/subservices", this.createService.bind(this));
-    this.router.put("/subservices", this.updateService.bind(this));
-    this.router.get("/subservicesbyid", this.getServiceById.bind(this));
+    this.router.get("/sub", this.getAllSubServices.bind(this));
+    this.router.post("/sub", this.createSubService.bind(this));
+    this.router.put("/sub", this.updateSubService.bind(this));
+    this.router.get("/subbyid", this.getSubServiceById.bind(this));
 
     
   }
@@ -34,8 +34,6 @@ export default class ServiceController {
       const newId = (Number(rows[0]?.maxId || 0) + 1).toString().padStart(3, '0');
       console.log('maxid :',rows[0]?.maxId );
       
-console.log('newId',newId);
-
       const insertQuery = ` INSERT INTO SERVICES ( ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, CREATED_AT) VALUES ( ?, ?, ?, ?, ?, ?, NOW()) `;
       const params = [ newId, input.NAME, input.DESCRIPTION, input.IMAGE_URL, input.STATUS, input.CREATED_BY];
 
@@ -91,7 +89,7 @@ console.log('newId',newId);
        const results={ message: "Service updated"}
       res.json({ status:  0, result:results });
     } catch (err: any) {
-      res.json({ status: 1, error: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     }
   }
 
@@ -115,10 +113,11 @@ console.log('newId',newId);
 
       const result = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
       await connection.commit();
-      res.json({ status: 1, message: "Sub-service created", subServiceId: newId, affectedRows: result.affectedRows });
+      const results = {message: "Sub-service created", subServiceId: newId, affectedRows: result.affectedRows};
+      res.json({ status: 0, result:results });
     } catch (err: any) {
       if (connection) await connection.rollback();
-      res.json({ status: 0, error: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     } finally {
       if (connection) connection.release();
     }
@@ -131,9 +130,9 @@ console.log('newId',newId);
 
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
-      res.json({ status: 1, data: rows });
+      res.json({ status: 0, result: rows });
     } catch (err: any) {
-      res.json({ status: 0, error: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     }
   }
 
@@ -145,9 +144,9 @@ console.log('newId',newId);
 
     try {
       const rows = await executeDbQuery(query, [subServiceId], false, apiName, port);
-      res.json({ status: 1, data: rows });
+      res.json({ status: 0, result: rows });
     } catch (err: any) {
-      res.status(500).json({ status: 0, error: err.toString() });
+      res.status(500).json({ status: 1, result: err.toString() });
     }
   }
 
@@ -161,9 +160,10 @@ console.log('newId',newId);
 
     try {
       const result = await executeDbQuery(query, params, true, apiName, port);
-      res.json({ status: 0, message: "Sub-service updated"});
+      const reults = {message: "Sub-service updated"};
+      res.json({ status: 0, result:reults });
     } catch (err: any) {
-      res.json({ status: 0, error: err.toString() });
+      res.json({ status: 1, error: err.toString() });
     }
   }
 }
