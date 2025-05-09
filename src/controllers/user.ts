@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import { pool, executeDbQuery } from "../db";
 import { request } from "http";
 
-class UserController {
+class UserController {  
   public router = express.Router();
 
   constructor(app: any) {
@@ -21,9 +21,8 @@ class UserController {
       // conn = await
       let query=`select U.USER_ID, U.NAME, U.EMAIL, R.ROLE_NAME FROM USERS U LEFT JOIN ROLES R ON R.ROLE_ID=U.ROLE WHERE U.EMAIL=? and U.PASSWORD=? `;
       const params=[input.email,input.password];
-      console.log(input);
       
-let connection = await pool.getConnection();
+      let connection = await pool.getConnection();
       const result = await executeDbQuery(query, params, false, apiName);
       if(result.length>=1){
         Response.json({ status: 0, result: result });
@@ -38,28 +37,34 @@ let connection = await pool.getConnection();
   }
 
   async createUser(req: Request, res: Response) {
-    const apiName = "user/create";
-    const port: number = req.socket.localPort!;
-    let conn;
-    try {
-      conn = await pool.getConnection();
-      await conn.beginTransaction();
-      await executeDbQuery("CALL GenerateUserId(@id)", [], false, apiName, port, conn);
-      const idRows = await executeDbQuery("SELECT @id as newUserId", [], false, apiName, port, conn);
-      const newUserId = idRows[0]?.newUserId;
-      const { city_id, first_name, sur_name, father_name, gender, dob, mobile, alternate_mobile, email, role, address, status, image_url, created_by } = req.body;
-      const insertQuery = "INSERT INTO USERS (CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_AT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())";
-      const params = [city_id, newUserId, first_name, sur_name, father_name, gender, dob, mobile, alternate_mobile, email, role, address, status, image_url, created_by];
-      const result = await executeDbQuery(insertQuery, params, false, apiName, port, conn);
-      await conn.commit();
-      res.json({ status: 1, message: "User created", userId: newUserId, affectedRows: result.affectedRows });
-    } catch (err: any) {
-      if (conn) await conn.rollback();
-      res.json({ status: 1, error: err.toString() });
-    } finally {
-      if (conn) conn.release();
-    }
+  const apiName = "user/create";
+  const port: number = req.socket.localPort!;
+  let connection;
+  let input = req.body;
+  try {
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    
+    await executeDbQuery("CALL GenerateUserId(@id)", [], false, apiName, port, connection);
+    
+    const idRows = await executeDbQuery("SELECT @id as newUserId", [], false, apiName, port, connection);
+    const newUserId = idRows[0]?.newUserId;
+    
+    const insertQuery = ` INSERT INTO USERS ( CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_AT ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())`;
+      
+    const params = [ input.city_id, newUserId, input.first_name, input.sur_name, input.father_name, input.gender, input.dob, input.mobile, input.alternate_mobile, input.email, input.role, input.address, input.status, input.image_url, input.created_by ];
+      
+    const result = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
+    await connection.commit();
+    res.json({ status: 1, message: "User created", userId: newUserId, affectedRows: result.affectedRows });
+  } catch (err: any) {
+    if (connection) await connection.rollback();
+    res.json({ status: 0, error: err.toString() });
+  } finally {
+    if (connection) connection.release();
   }
+}
+
 
   async getAllUsers(req: Request, res: Response) {
     const apiName = "user/read-all";
@@ -89,9 +94,9 @@ let connection = await pool.getConnection();
   async updateUser(req: Request, res: Response) {
     const apiName = "user/update";
     const port: number = req.socket.localPort!;
-    const { id, city_id, first_name, sur_name, father_name, gender, dob, mobile, alternate_mobile, email, role, address, status, image_url, edited_by } = req.body;
+    let input=req.body;
     const updateQuery = "UPDATE USERS SET CITY_ID = ?, NAME = ?, SURNAME = ?, FATHER_NAME = ?, GENDER = ?, DOB = ?, MOBILE_NUMBER = ?, ALTERNATE_NUMBER = ?, EMAIL = ?, ROLE = ?, ADDRESS = ?, STATUS = ?, IMAGE_URL = ?, UPDATED_BY = ?, UPDATED_AT = NOW() WHERE USER_ID = ?";
-    const params = [city_id, first_name, sur_name, father_name, gender, dob, mobile, alternate_mobile, email, role, address, status, image_url, edited_by, id];
+    const params = [ input.city_id, input.first_name, input.sur_name, input.father_name, input.gender, input.dob, input.mobile, input.alternate_mobile, input.email, input.role, input.address, input.status, input.image_url, input.updated_by, input.id ];
     try {
       const result = await executeDbQuery(updateQuery, params, true, apiName, port);
       res.json({ status: 0, message: "User updated" });

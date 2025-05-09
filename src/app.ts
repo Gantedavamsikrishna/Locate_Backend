@@ -8,7 +8,7 @@ import UserController from "./controllers/user";
 const app = express();
 app.use(express.json());
 new UserController(app);
-app.use("/api", serviceRoutes);
+new serviceRoutes(app)
 
 // ------------------------------------------------------------------
 // LOAD BALANCER SETUP
