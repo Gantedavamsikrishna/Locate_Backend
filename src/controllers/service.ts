@@ -8,15 +8,15 @@ export default class ServiceController {
   constructor(app: Application) {
     app.use("/api/service", this.router);
 
-    this.router.get("/services", this.getAllServices.bind(this));
     this.router.post("/services", this.createService.bind(this));
-    this.router.put("/services", this.updateService.bind(this));
+    this.router.get("/services", this.getAllServices.bind(this));
     this.router.get("/servicesbyid", this.getServiceById.bind(this));
+    this.router.put("/services", this.updateService.bind(this));
 
-    this.router.get("/sub", this.getAllSubServices.bind(this));
     this.router.post("/sub", this.createSubService.bind(this));
-    this.router.put("/sub", this.updateSubService.bind(this));
+    this.router.get("/sub", this.getAllSubServices.bind(this));
     this.router.get("/subbyid", this.getSubServiceById.bind(this));
+    this.router.put("/sub", this.updateSubService.bind(this));
 
     
   }
@@ -30,6 +30,14 @@ export default class ServiceController {
     try {
       connection = await pool.getConnection();
       await connection.beginTransaction();
+
+      const chekdup = ` SELECT COUNT(*) as count NAME, DESCRIPTION FROM SERVICES WHERE NAME=? AND DESCRIPTION=?`;
+        const dupResult = await executeDbQuery(chekdup, [input.NAME, input.DESCRIPTION], false, apiName, port, connection);
+        if (Number(dupResult[0]?.count) > 0) {
+            await connection.rollback();
+            res.status(409).json({ status: 2, result: "Service already exists." });
+            return;
+        }
 
       const rows = await executeDbQuery( "SELECT MAX(CAST(ID AS UNSIGNED)) AS maxId FROM SERVICES", [], false, apiName, port, connection );
       const newId = (Number(rows[0]?.maxId || 0) + 1).toString().padStart(3, '0');
@@ -83,6 +91,16 @@ export default class ServiceController {
     const apiName = "service/update";
     const port = req.socket.localPort!;
     let input = req.body;
+     let connection: any;
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const chekdup = ` SELECT COUNT(*) as count NAME, DESCRIPTION FROM SERVICES WHERE FEED_HEAD=? AND FEED_MATTER=?`;
+        const dupResult = await executeDbQuery(chekdup, [input.NAME, input.DESCRIPTION], false, apiName, port, connection);
+        if (Number(dupResult[0]?.count) > 0) {
+            await connection.rollback();
+            res.status(409).json({ status: 2, result: "Service already exists." });
+            return;
+        }
     const image_url = await uploadImage(input.IMAGE_URL);
     const query = ` UPDATE SERVICES SET  NAME = ?, DESCRIPTION = ?, IMAGE_URL = ?, STATUS = ?, UPDATED_BY = ?, UPDATED_AT = NOW() WHERE ID = ? `;
     const params = [ input.NAME, input.DESCRIPTION, image_url, input.STATUS, input.CREATED_BY, input.ID];
@@ -107,6 +125,14 @@ export default class ServiceController {
       connection = await pool.getConnection();
       await connection.beginTransaction();
 
+      const chekdup = ` SELECT COUNT(*) as count SUB_SERVICES_NAME, BUSINESS_NAME FROM SUB_SERVICES WHERE SUB_SERVICES_NAME=? AND BUSINESS_NAME=?`;
+        const dupResult = await executeDbQuery(chekdup, [input.sub_services_name, input.business_name], false, apiName, port, connection);
+        if (Number(dupResult[0]?.count) > 0) {
+            await connection.rollback();
+            res.status(409).json({ status: 2, result: "Sub Service already exists." });
+            return;
+        }
+        
       const rows = await executeDbQuery("SELECT MAX(CAST(SUB_SERVICE_ID AS UNSIGNED)) AS maxId FROM SUB_SERVICES", [], false, apiName, port, connection);
       const newId = (Number(rows[0]?.maxId || 0) + 1).toString().padStart(4, '0');
       const image_url1 = await uploadImage(input.image_url1);
@@ -147,6 +173,7 @@ export default class ServiceController {
     const apiName = "subservice/read";
     const port = req.socket.localPort!;
     const subServiceId = req.query.id || "";
+
     const query = ` SELECT CITY_ID, SUB_SERVICE_ID, SUB_SERVICES_NAME, BUSINESS_NAME, OWNER_NAME, BUSINESS_TYPE, MOBILE, ADDRESS, WEEKDAY_TIMINGS, SUNDAY_TIMINGS, WEBSITE_URL, EMAIL, DESCRIPTION, LATITUDE, LONGITUDE, DEFAULT_CONTACT, IMAGE_URL1, IMAGE_URL2, IMAGE_URL3, IMAGE_URL4, IMAGE_URL5, CREATED_BY, CREATED_ON, EDITED_BY, EDITED_ON FROM SUB_SERVICES WHERE SUB_SERVICE_ID = ?`;
 
     try {
@@ -161,6 +188,18 @@ export default class ServiceController {
     const apiName = "subservice/update";
     const port = req.socket.localPort!;
     let input = req.body;
+    let connection: any;
+    connection = await pool.getConnection();
+      await connection.beginTransaction();
+
+      const chekdup = ` SELECT COUNT(*) as count SUB_SERVICES_NAME, BUSINESS_NAME FROM SUB_SERVICES WHERE SUB_SERVICES_NAME=? AND BUSINESS_NAME=?`;
+        const dupResult = await executeDbQuery(chekdup, [input.sub_services_name, input.business_name], false, apiName, port, connection);
+        if (Number(dupResult[0]?.count) > 0) {
+            await connection.rollback();
+            res.status(409).json({ status: 2, result: "Sub Service already exists." });
+            return;
+        }
+
       const image_url1 = await uploadImage(input.image_url1);
       const image_url2 = await uploadImage(input.image_url2);
       const image_url3 = await uploadImage(input.image_url3);

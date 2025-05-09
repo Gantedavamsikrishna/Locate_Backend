@@ -1,6 +1,7 @@
 import express, { Request, Response, Application } from "express";
 import { pool, executeDbQuery } from "../db";
 import { uploadImage } from "../utils/cloudinaryUtil";
+import { promises } from "dns";
 
 export default class NewsFeedController {
   public router = express.Router();
@@ -15,37 +16,52 @@ export default class NewsFeedController {
   }
 
   async createNewsFeed(req: Request, res: Response) {
-    const apiName = "newsfeed/create";
-    const port = req.socket.localPort!;
-    const input = req.body;
-    let connection;
+  const apiName = "newsfeed/create";
+  const port = req.socket.localPort!;
+  const input = req.body;
+  let connection;
 
-    try {
-      connection = await pool.getConnection();
-      await connection.beginTransaction();
+  try {
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
 
-      const result = await executeDbQuery( "SELECT MAX(CAST(SUBSTRING(FEED_ID, 5) AS UNSIGNED)) AS maxId FROM NEWS_FEED", [], false, apiName, port, connection );
-      const newId = "FEED" + String((Number(result[0]?.maxId || 0) + 1)).padStart(3, "0");
-    const image_url = await uploadImage(input.IMAGE_URL);
-      const insertQuery = ` INSERT INTO NEWS_FEED (CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, FEED_DATE, STATUS, FEEDAPP_STATUS, CREATED_BY, CREATED_ON) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW()) `;
-      const params = [ input.city_id, newId, input.feed_head, input.feed_matter, image_url, input.feed_date, input.status, input.feedapp_status, input.created_by ];
-
-      const insertResult = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
-      await connection.commit();
-     const results = {message: "News feed created", feedId: newId, affectedRows: insertResult.affectedRows};
-      res.json({ status: 0, result:results });
-    } catch (err: any) {
-      if (connection) await connection.rollback();
-      res.json({ status: 1, result: err.toString() });
-    } finally {
-      if (connection) connection.release();
+    // Duplicate check: count rows where FEED_HEAD and FEED_MATTER match.
+    const chekdup = `SELECT COUNT(*) as count FROM NEWS_FEED WHERE FEED_HEAD=? AND FEED_MATTER=?`;
+    const dupResult = await executeDbQuery(chekdup, [input.feed_head, input.feed_matter], false, apiName, port, connection);
+    if (Number(dupResult[0]?.count) > 0) {
+      await connection.rollback();
+      res.status(409).json({ status: 2, result: "News feed already exists." });
+      return;
     }
+
+    // Generate new FEED_ID.
+    const result = await executeDbQuery("SELECT MAX(CAST(SUBSTRING(FEED_ID, 5) AS UNSIGNED)) AS maxId FROM NEWS_FEED", [], false, apiName, port, connection);
+    const newId = "FEED" + String((Number(result[0]?.maxId || 0) + 1)).padStart(3, "0");
+
+    // Upload image.
+    const image_url = await uploadImage(input.IMAGE_URL);
+
+    // Insert new news feed.
+    const insertQuery = `INSERT INTO NEWS_FEED (CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, FEED_DATE, STATUS, CREATED_BY, CREATED_ON) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
+    const params = [ input.city_id, newId, input.feed_head, input.feed_matter, image_url, input.feed_date, input.status, input.created_by ];
+    const insertResult = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
+    await connection.commit();
+
+    const results = { message: "News feed created", feedId: newId, affectedRows: insertResult.affectedRows };
+    res.json({ status: 0, result: results });
+  } catch (err: any) {
+    if (connection) await connection.rollback();
+    res.json({ status: 1, result: err.toString() });
+  } finally {
+    if (connection) connection.release();
   }
+}
+
 
   async getAllNewsFeeds(req: Request, res: Response) {
     const apiName = "newsfeed/read-all";
     const port = req.socket.localPort!;
-    const query = `SELECT CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, FEED_DATE, STATUS, FEEDAPP_STATUS, CREATED_BY, CREATED_ON, EDITED_BY, EDITED_ON FROM NEWS_FEED`;
+    const query = `SELECT CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, FEED_DATE, STATUS, CREATED_BY, CREATED_ON, EDITED_BY, EDITED_ON FROM NEWS_FEED`;
 
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
@@ -59,7 +75,7 @@ export default class NewsFeedController {
     const apiName = "newsfeed/read";
     const port = req.socket.localPort!;
     const feedId = req.query.id || "";
-    const query = `SELECT CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, FEED_DATE, STATUS, FEEDAPP_STATUS, CREATED_BY, CREATED_ON, EDITED_BY, EDITED_ON FROM NEWS_FEED WHERE FEED_ID = ?`;
+    const query = `SELECT CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, FEED_DATE, STATUS, CREATED_BY, CREATED_ON, EDITED_BY, EDITED_ON FROM NEWS_FEED WHERE FEED_ID = ?`;
 
     try {
       const rows = await executeDbQuery(query, [feedId], false, apiName, port);
@@ -73,9 +89,21 @@ export default class NewsFeedController {
     const apiName = "newsfeed/update";
     const port = req.socket.localPort!;
     const input = req.body;
+     let connection: any;
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    // Duplicate check: count rows where FEED_HEAD and FEED_MATTER match.
+    const chekdup = `SELECT COUNT(*) as count FROM NEWS_FEED WHERE FEED_HEAD=? AND FEED_MATTER=?`;
+    const dupResult = await executeDbQuery(chekdup, [input.feed_head, input.feed_matter], false, apiName, port, connection);
+    if (Number(dupResult[0]?.count) > 0) {
+      await connection.rollback();
+      res.status(409).json({ status: 2, result: "News feed already exists." });
+      return;
+    }
+
     const image_url = await uploadImage(input.IMAGE_URL);
-    const updateQuery = ` UPDATE NEWS_FEED SET CITY_ID = ?, FEED_HEAD = ?, FEED_MATTER = ?, IMAGE_URL = ?, FEED_DATE = ?, STATUS = ?, FEEDAPP_STATUS = ?, EDITED_BY = ?, EDITED_ON = NOW() WHERE FEED_ID = ? `;
-    const params = [ input.city_id, input.feed_head, input.feed_matter, image_url, input.feed_date, input.status, input.feedapp_status, input.edited_by, input.feed_id ];
+    const updateQuery = ` UPDATE NEWS_FEED SET CITY_ID = ?, FEED_HEAD = ?, FEED_MATTER = ?, IMAGE_URL = ?, FEED_DATE = ?, STATUS = ?, EDITED_BY = ?, EDITED_ON = NOW() WHERE FEED_ID = ? `;
+    const params = [ input.city_id, input.feed_head, input.feed_matter, image_url, input.feed_date, input.status, input.edited_by, input.feed_id ];
 
     try {
       const result = await executeDbQuery(updateQuery, params, true, apiName, port);

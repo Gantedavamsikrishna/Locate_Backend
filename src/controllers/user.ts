@@ -51,6 +51,14 @@ class UserController {
     connection = await pool.getConnection();
     await connection.beginTransaction();
     
+      const chekdup = ` SELECT COUNT(*) as count EMAIL, MOBILE_NUMBER FROM USERS WHERE EMAIL=? AND MOBILE_NUMBER=?`;
+          const dupResult = await executeDbQuery(chekdup, [input.email, input.mobile], false, apiName, port, connection);
+          if (Number(dupResult[0]?.count) > 0) {
+              await connection.rollback();
+              res.status(409).json({ status: 2, result: "User already exists." });
+              return;
+          }
+        
     await executeDbQuery("CALL GenerateUserId(@id)", [], false, apiName, port, connection);
     
     const idRows = await executeDbQuery("SELECT @id as newUserId", [], false, apiName, port, connection);
@@ -102,6 +110,18 @@ class UserController {
     const apiName = "user/update";
     const port: number = req.socket.localPort!;
     let input=req.body;
+    let connection: any;
+    connection = await pool.getConnection();
+      await connection.beginTransaction();
+
+    const chekdup = ` SELECT COUNT(*) as count EMAIL, MOBILE_NUMBER FROM USERS WHERE EMAIL=? AND MOBILE_NUMBER=?`;
+          const dupResult = await executeDbQuery(chekdup, [input.email, input.mobile], false, apiName, port, connection);
+          if (Number(dupResult[0]?.count) > 0) {
+              await connection.rollback();
+              res.status(409).json({ status: 2, result: "User already exists." });
+              return;
+          }
+
     const image_url = await uploadImage(input.image_url);
     const updateQuery = "UPDATE USERS SET CITY_ID = ?, NAME = ?, SURNAME = ?, FATHER_NAME = ?, GENDER = ?, DOB = ?, MOBILE_NUMBER = ?, ALTERNATE_NUMBER = ?, EMAIL = ?, ROLE = ?, ADDRESS = ?, STATUS = ?, IMAGE_URL = ?, UPDATED_BY = ?, UPDATED_AT = NOW() WHERE USER_ID = ?";
     const params = [ input.city_id, input.first_name, input.sur_name, input.father_name, input.gender, input.dob, input.mobile, input.alternate_mobile, input.email, input.role, input.address, input.status, image_url, input.updated_by, input.id ];
@@ -119,6 +139,15 @@ class UserController {
     const apiName = "role/create"; const port = req.socket.localPort!; const input = req.body; let connection;
     try {
       connection = await pool.getConnection(); await connection.beginTransaction();
+
+       const chekdup = ` SELECT COUNT(*) as count ROLE_NAME, DESCRIPTION FROM ROLES WHERE ROLE_NAME=? AND DESCRIPTION=?`;
+          const dupResult = await executeDbQuery(chekdup, [input.role_name, input.description], false, apiName, port, connection);
+          if (Number(dupResult[0]?.count) > 0) {
+              await connection.rollback();
+              res.status(409).json({ status: 2, result: "Role already exists." });
+              return;
+          }
+
       const maxIdResult = await executeDbQuery("SELECT IFNULL(MAX(ROLE_ID), 1110) AS maxId FROM ROLES", [], false, apiName, port, connection);
       const newId = Number(maxIdResult[0]?.maxId || 1110) + 1;
       const insertQuery = `INSERT INTO ROLES (CITY_ID, ROLE_ID, ROLE_NAME, DESCRIPTION, STATUS, CREATED_BY, CREATED_AT) VALUES (?, ?, ?, ?, ?, ?, NOW())`;
@@ -148,6 +177,17 @@ class UserController {
 
   async updateRole(req: Request, res: Response) {
     const apiName = "role/update"; const port = req.socket.localPort!; const input = req.body;
+    let connection: any;
+    connection = await pool.getConnection();
+      await connection.beginTransaction();
+    const chekdup = ` SELECT COUNT(*) as count ROLE_NAME, DESCRIPTION FROM ROLES WHERE ROLE_NAME=? AND DESCRIPTION=?`;
+          const dupResult = await executeDbQuery(chekdup, [input.role_name, input.description], false, apiName, port, connection);
+          if (Number(dupResult[0]?.count) > 0) {
+              await connection.rollback();
+              res.status(409).json({ status: 2, result: "Role already exists." });
+              return;
+          }
+
     const query = `UPDATE ROLES SET CITY_ID = ?, ROLE_NAME = ?, DESCRIPTION = ?, STATUS = ?, UPDATED_BY = ?, UPDATED_AT = NOW() WHERE ROLE_ID = ?`;
     const params = [input.city_id, input.role_name, input.description, input.status, input.updated_by, input.role_id];
     try {
