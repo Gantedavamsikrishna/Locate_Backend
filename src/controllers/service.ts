@@ -8,15 +8,15 @@ export default class ServiceController {
   constructor(app: Application) {
     app.use("/api/service", this.router);
 
-    this.router.post("/services", this.createService.bind(this));
     this.router.get("/services", this.getAllServices.bind(this));
     this.router.get("/servicesbyid", this.getServiceById.bind(this));
     this.router.put("/services", this.updateService.bind(this));
+    this.router.post("/services", this.createService.bind(this));
 
-    this.router.post("/sub", this.createSubService.bind(this));
     this.router.get("/sub", this.getAllSubServices.bind(this));
     this.router.get("/subbyid", this.getSubServiceById.bind(this));
     this.router.put("/sub", this.updateSubService.bind(this));
+    this.router.post("/sub", this.createSubService.bind(this));
 
     
   }
@@ -44,7 +44,7 @@ export default class ServiceController {
       console.log('maxid :',rows[0]?.maxId );
       const image_url = await uploadImage(input.IMAGE_URL);
       
-      const insertQuery = ` INSERT INTO SERVICES ( ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, CREATED_AT) VALUES ( ?, ?, ?, ?, ?, ?, NOW()) `;
+      const insertQuery = ` INSERT INTO SERVICES ( ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY) VALUES ( ?, ?, ?, ?, ?, ?) `;
       const params = [ newId, input.NAME, input.DESCRIPTION, image_url, input.STATUS, input.CREATED_BY];
 
       const result = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
@@ -63,7 +63,7 @@ export default class ServiceController {
   async getAllServices(req: Request, res: Response) {
     const apiName = "service/read-all";
     const port = req.socket.localPort!;
-    const query = ` SELECT  ID, NAME, DESCRIPTION, IMAGE_URL, STATUS FROM SERVICES `;
+    const query = ` SELECT CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, DATE_FORMAT(CREATED_AT, '%d/%m/%Y %H:%i') AS CREATED_ON, UPDATED_BY, DATE_FORMAT(UPDATED_AT, '%d/%m/%Y %H:%i') AS EDITED_ON FROM SERVICES `;
 
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
@@ -77,7 +77,7 @@ export default class ServiceController {
     const apiName = "service/read";
     const port = req.socket.localPort!;
     const id = req.query.id || "";
-    const query = ` SELECT CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, CREATED_AT, UPDATED_BY, UPDATED_AT FROM SERVICES WHERE ID = ? `;
+    const query = ` SELECT CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, DATE_FORMAT(CREATED_AT, '%d/%m/%Y %H:%i') AS CREATED_ON, UPDATED_BY, DATE_FORMAT(UPDATED_AT, '%d/%m/%Y %H:%i') AS EDITED_ON FROM SERVICES WHERE ID = ? `;
 
     try {
       const rows = await executeDbQuery(query, [id], false, apiName, port);
@@ -102,7 +102,7 @@ export default class ServiceController {
             return;
         }
     const image_url = await uploadImage(input.IMAGE_URL);
-    const query = ` UPDATE SERVICES SET  NAME = ?, DESCRIPTION = ?, IMAGE_URL = ?, STATUS = ?, UPDATED_BY = ?, UPDATED_AT = NOW() WHERE ID = ? `;
+    const query = ` UPDATE SERVICES SET  NAME = ?, DESCRIPTION = ?, IMAGE_URL = ?, STATUS = ?, UPDATED_BY = ? WHERE ID = ? `;
     const params = [ input.NAME, input.DESCRIPTION, image_url, input.STATUS, input.CREATED_BY, input.ID];
 
     try {
@@ -126,7 +126,7 @@ export default class ServiceController {
       await connection.beginTransaction();
 
       const chekdup = ` SELECT COUNT(*) as count FROM SUB_SERVICES WHERE SUB_SERVICES_NAME=? AND BUSINESS_NAME=?`;
-        const dupResult = await executeDbQuery(chekdup, [input.sub_services_name, input.business_name], false, apiName, port, connection);
+        const dupResult = await executeDbQuery(chekdup, [input.SUB_SERVICES_NAME, input.BUSINESS_NAME], false, apiName, port, connection);
         if (Number(dupResult[0]?.count) > 0) {
             await connection.rollback();
             res.status(409).json({ status: 2, result: "Sub Service already exists." });
@@ -135,14 +135,14 @@ export default class ServiceController {
         
       const rows = await executeDbQuery("SELECT MAX(CAST(SUB_SERVICE_ID AS UNSIGNED)) AS maxId FROM SUB_SERVICES", [], false, apiName, port, connection);
       const newId = (Number(rows[0]?.maxId || 0) + 1).toString().padStart(4, '0');
-      const image_url1 = await uploadImage(input.image_url1);
-      const image_url2 = await uploadImage(input.image_url2);
-      const image_url3 = await uploadImage(input.image_url3);
-      const image_url4 = await uploadImage(input.image_url4);
-      const image_url5 = await uploadImage(input.image_url5);
-      const insertQuery = ` INSERT INTO SUB_SERVICES (CITY_ID, SUB_SERVICE_ID, SUB_SERVICES_NAME, BUSINESS_NAME, OWNER_NAME, BUSINESS_TYPE, MOBILE, ADDRESS, WEEKDAY_TIMINGS, SUNDAY_TIMINGS, WEBSITE_URL, EMAIL, DESCRIPTION, LATITUDE, LONGITUDE, DEFAULT_CONTACT, IMAGE_URL1, IMAGE_URL2, IMAGE_URL3, IMAGE_URL4, IMAGE_URL5, CREATED_BY, CREATED_ON) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
+      const image_url1 = await uploadImage(input.IMAGE_URL1);
+      const image_url2 = await uploadImage(input.IMAGE_URL2);
+      const image_url3 = await uploadImage(input.IMAGE_URL3);
+      const image_url4 = await uploadImage(input.IMAGE_URL4);
+      const image_url5 = await uploadImage(input.IMAGE_URL5);
+      const insertQuery = ` INSERT INTO SUB_SERVICES (CITY_ID, SUB_SERVICE_ID, SUB_SERVICES_NAME, BUSINESS_NAME, OWNER_NAME, BUSINESS_TYPE, MOBILE, ADDRESS, WEEKDAY_TIMINGS, SUNDAY_TIMINGS, WEBSITE_URL, EMAIL, DESCRIPTION, LATITUDE, LONGITUDE, DEFAULT_CONTACT, IMAGE_URL1, IMAGE_URL2, IMAGE_URL3, IMAGE_URL4, IMAGE_URL5, STATUS, CREATED_BY) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         
-      const params = [ input.city_id, newId, input.sub_services_name, input.business_name, input.owner_name, input.business_type, input.mobile, input.address, input.weekday_timings, input.sunday_timings, input.website_url, input.email, input.description, input.latitude, input.longitude, input.default_contact, image_url1, image_url2, image_url3, image_url4, image_url5, input.created_by ];
+      const params = [ input.CITY_ID, newId, input.SUB_SERVICES_NAME, input.BUSINESS_NAME, input.OWNER_NAME, input.BUSINESS_TYPE, input.MOBILE, input.ADDRESS, input.WEEKDAY_TIMINGS, input.SUNDAY_TIMINGS, input.WEBSITE_URL, input.EMAIL, input.DESCRIPTION, input.LATITUDE, input.LONGITUDE, input.DEFAULT_CONTACT, image_url1, image_url2, image_url3, image_url4, image_url5, input.STATUS, input.CREATED_BY ];
 
       const result = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
       await connection.commit();
@@ -159,7 +159,7 @@ export default class ServiceController {
   async getAllSubServices(req: Request, res: Response) {
     const apiName = "subservice/read-all";
     const port = req.socket.localPort!;
-    const query = ` SELECT CITY_ID, SUB_SERVICE_ID, SUB_SERVICES_NAME, BUSINESS_NAME, OWNER_NAME, BUSINESS_TYPE, MOBILE, ADDRESS, WEEKDAY_TIMINGS, SUNDAY_TIMINGS, WEBSITE_URL, EMAIL, DESCRIPTION, LATITUDE, LONGITUDE, DEFAULT_CONTACT, IMAGE_URL1, IMAGE_URL2, IMAGE_URL3, IMAGE_URL4, IMAGE_URL5, CREATED_BY, CREATED_ON, EDITED_BY, EDITED_ON FROM SUB_SERVICES`;
+    const query = ` SELECT CITY_ID, SUB_SERVICE_ID, SUB_SERVICES_NAME, BUSINESS_NAME, OWNER_NAME, BUSINESS_TYPE, MOBILE, ADDRESS, WEEKDAY_TIMINGS, SUNDAY_TIMINGS, WEBSITE_URL, EMAIL, DESCRIPTION, LATITUDE, LONGITUDE, DEFAULT_CONTACT, IMAGE_URL1, IMAGE_URL2, IMAGE_URL3, IMAGE_URL4, IMAGE_URL5, STATUS, CREATED_BY, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, EDITED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM SUB_SERVICES`;
 
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
@@ -174,7 +174,7 @@ export default class ServiceController {
     const port = req.socket.localPort!;
     const subServiceId = req.query.id || "";
 
-    const query = ` SELECT CITY_ID, SUB_SERVICE_ID, SUB_SERVICES_NAME, BUSINESS_NAME, OWNER_NAME, BUSINESS_TYPE, MOBILE, ADDRESS, WEEKDAY_TIMINGS, SUNDAY_TIMINGS, WEBSITE_URL, EMAIL, DESCRIPTION, LATITUDE, LONGITUDE, DEFAULT_CONTACT, IMAGE_URL1, IMAGE_URL2, IMAGE_URL3, IMAGE_URL4, IMAGE_URL5, CREATED_BY, CREATED_ON, EDITED_BY, EDITED_ON FROM SUB_SERVICES WHERE SUB_SERVICE_ID = ?`;
+    const query = ` SELECT CITY_ID, SUB_SERVICE_ID, SUB_SERVICES_NAME, BUSINESS_NAME, OWNER_NAME, BUSINESS_TYPE, MOBILE, ADDRESS, WEEKDAY_TIMINGS, SUNDAY_TIMINGS, WEBSITE_URL, EMAIL, DESCRIPTION, LATITUDE, LONGITUDE, DEFAULT_CONTACT, IMAGE_URL1, IMAGE_URL2, IMAGE_URL3, IMAGE_URL4, IMAGE_URL5, STATUS, CREATED_BY, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, EDITED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM SUB_SERVICES WHERE SUB_SERVICE_ID = ?`;
 
     try {
       const rows = await executeDbQuery(query, [subServiceId], false, apiName, port);
@@ -193,21 +193,21 @@ export default class ServiceController {
       await connection.beginTransaction();
 
       const chekdup = ` SELECT COUNT(*) as count FROM SUB_SERVICES WHERE SUB_SERVICES_NAME=? AND BUSINESS_NAME=?`;
-        const dupResult = await executeDbQuery(chekdup, [input.sub_services_name, input.business_name], false, apiName, port, connection);
+        const dupResult = await executeDbQuery(chekdup, [input.SUB_SERVICES_NAME, input.BUSINESS_NAME], false, apiName, port, connection);
         if (Number(dupResult[0]?.count) > 0) {
             await connection.rollback();
             res.status(409).json({ status: 2, result: "Sub Service already exists." });
             return;
         }
 
-      const image_url1 = await uploadImage(input.image_url1);
-      const image_url2 = await uploadImage(input.image_url2);
-      const image_url3 = await uploadImage(input.image_url3);
-      const image_url4 = await uploadImage(input.image_url4);
-      const image_url5 = await uploadImage(input.image_url5);
-    const query = ` UPDATE SUB_SERVICES SET CITY_ID = ?, SUB_SERVICES_NAME = ?, BUSINESS_NAME = ?, OWNER_NAME = ?, BUSINESS_TYPE = ?, MOBILE = ?, ADDRESS = ?, WEEKDAY_TIMINGS = ?, SUNDAY_TIMINGS = ?, WEBSITE_URL = ?, EMAIL = ?, DESCRIPTION = ?, LATITUDE = ?, LONGITUDE = ?, DEFAULT_CONTACT = ?, IMAGE_URL1 = ?, IMAGE_URL2 = ?, IMAGE_URL3 = ?, IMAGE_URL4 = ?, IMAGE_URL5 = ?, EDITED_BY = ?, EDITED_ON = NOW() WHERE SUB_SERVICE_ID = ?`;
+      const image_url1 = await uploadImage(input.IMAGE_URL1);
+      const image_url2 = await uploadImage(input.IMAGE_URL2);
+      const image_url3 = await uploadImage(input.IMAGE_URL3);
+      const image_url4 = await uploadImage(input.IMAGE_URL4);
+      const image_url5 = await uploadImage(input.IMAGE_URL5);
+    const query = ` UPDATE SUB_SERVICES SET CITY_ID = ?, SUB_SERVICES_NAME = ?, BUSINESS_NAME = ?, OWNER_NAME = ?, BUSINESS_TYPE = ?, MOBILE = ?, ADDRESS = ?, WEEKDAY_TIMINGS = ?, SUNDAY_TIMINGS = ?, WEBSITE_URL = ?, EMAIL = ?, DESCRIPTION = ?, LATITUDE = ?, LONGITUDE = ?, DEFAULT_CONTACT = ?, IMAGE_URL1 = ?, IMAGE_URL2 = ?, IMAGE_URL3 = ?, IMAGE_URL4 = ?, IMAGE_URL5 = ?, STATUS=?, EDITED_BY = ? WHERE SUB_SERVICE_ID = ?`;
 
-    const params = [ input.city_id, input.sub_services_name, input.business_name, input.owner_name, input.business_type, input.mobile, input.address, input.weekday_timings, input.sunday_timings, input.website_url, input.email, input.description, input.latitude, input.longitude, input.default_contact, image_url1, image_url2, image_url3, image_url4, image_url5, input.edited_by, input.sub_service_id ];
+    const params = [ input.CITY_ID, input.SUB_SERVICES_NAME, input.BUSINESS_NAME, input.OWNER_NAME, input.BUSINESS_TYPE, input.MOBILE, input.ADDRESS, input.WEEKDAY_TIMINGS, input.SUNDAY_TIMINGS, input.WEBSITE_URL, input.EMAIL, input.DESCRIPTION, input.LATITUDE, input.LONGITUDE, input.DEFAULT_CONTACT, image_url1, image_url2, image_url3, image_url4, image_url5, input.STATUS, input.EDITED_BY, input.SUB_SERVICE_ID ];
 
     try {
       const result = await executeDbQuery(query, params, true, apiName, port);

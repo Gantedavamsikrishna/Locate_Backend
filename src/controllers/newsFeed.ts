@@ -9,10 +9,10 @@ export default class NewsFeedController {
   constructor(app: Application) {
     app.use("/api/feed", this.router);
 
-    this.router.post("/newsfeeds", this.createNewsFeed.bind(this));
     this.router.get("/newsfeeds", this.getAllNewsFeeds.bind(this));
     this.router.get("/newsfeedbyid", this.getNewsFeedById.bind(this));
     this.router.put("/newsfeeds", this.updateNewsFeed.bind(this));
+    this.router.post("/newsfeeds", this.createNewsFeed.bind(this));
   }
 
   async createNewsFeed(req: Request, res: Response) {
@@ -42,7 +42,7 @@ export default class NewsFeedController {
     const image_url = await uploadImage(input.IMAGE_URL);
 
     // Insert new news feed.
-    const insertQuery = `INSERT INTO NEWS_FEED (CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, FEED_DATE, STATUS, CREATED_BY, CREATED_ON) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
+    const insertQuery = `INSERT INTO NEWS_FEED (CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, FEED_DATE, STATUS, CREATED_BY) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
     const params = [ input.city_id, newId, input.feed_head, input.feed_matter, image_url, input.feed_date, input.status, input.created_by ];
     const insertResult = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
     await connection.commit();
@@ -61,7 +61,7 @@ export default class NewsFeedController {
   async getAllNewsFeeds(req: Request, res: Response) {
     const apiName = "newsfeed/read-all";
     const port = req.socket.localPort!;
-    const query = `SELECT CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, FEED_DATE, STATUS, CREATED_BY, CREATED_ON, EDITED_BY, EDITED_ON FROM NEWS_FEED`;
+    const query = `SELECT CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, DATE_FORMAT(FEED_DATE, '%d/%m/%Y %H:%i') AS FEED_DATE, STATUS, CREATED_BY, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, EDITED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM NEWS_FEED`;
 
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
@@ -75,7 +75,7 @@ export default class NewsFeedController {
     const apiName = "newsfeed/read";
     const port = req.socket.localPort!;
     const feedId = req.query.id || "";
-    const query = `SELECT CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, FEED_DATE, STATUS, CREATED_BY, CREATED_ON, EDITED_BY, EDITED_ON FROM NEWS_FEED WHERE FEED_ID = ?`;
+    const query = `SELECT CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, CREATED_BY, DATE_FORMAT(FEED_DATE, '%d/%m/%Y %H:%i') AS FEED_DATE, STATUS, CREATED_BY, CREATED_BY, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, EDITED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM NEWS_FEED WHERE FEED_ID = ?`;
 
     try {
       const rows = await executeDbQuery(query, [feedId], false, apiName, port);
@@ -102,7 +102,7 @@ export default class NewsFeedController {
     }
 
     const image_url = await uploadImage(input.IMAGE_URL);
-    const updateQuery = ` UPDATE NEWS_FEED SET CITY_ID = ?, FEED_HEAD = ?, FEED_MATTER = ?, IMAGE_URL = ?, FEED_DATE = ?, STATUS = ?, EDITED_BY = ?, EDITED_ON = NOW() WHERE FEED_ID = ? `;
+    const updateQuery = ` UPDATE NEWS_FEED SET CITY_ID = ?, FEED_HEAD = ?, FEED_MATTER = ?, IMAGE_URL = ?, FEED_DATE = ?, STATUS = ?, EDITED_BY = ? WHERE FEED_ID = ? `;
     const params = [ input.city_id, input.feed_head, input.feed_matter, image_url, input.feed_date, input.status, input.edited_by, input.feed_id ];
 
     try {

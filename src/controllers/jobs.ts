@@ -1,4 +1,4 @@
-import express, { Request, Response, Application } from "express";
+    import express, { Request, Response, Application } from "express";
 import { pool, executeDbQuery } from "../db";
 import { uploadImage } from "../utils/cloudinaryUtil";
 
@@ -8,10 +8,10 @@ export default class JobsController {
   constructor(app: Application) {
     app.use("/api/jobs", this.router);
     // Endpoints:
-    this.router.post("/job", this.createJob.bind(this));
     this.router.get("/job", this.getAllJobs.bind(this));
     this.router.get("/jobbyid", this.getJobById.bind(this));
     this.router.put("/job", this.updateJob.bind(this));
+    this.router.post("/job", this.createJob.bind(this));
   }
 
   // Create Job Endpoint
@@ -25,8 +25,8 @@ export default class JobsController {
       await connection.beginTransaction();
 
       // Duplicate check: Ensure that a job with the same COMP_NM and DESCRIPTION does not exist.
-      const dupQuery = `SELECT COUNT(*) as count FROM JOBS WHERE COMP_NM = ? AND DESCRIPTION = ?`;
-      const dupResult = await executeDbQuery(dupQuery, [input.COMP_NM, input.DESCRIPTION], false, apiName, port, connection);
+      const dupQuery = `SELECT COUNT(*) as count FROM JOBS WHERE COMP_NM = ? AND JOB_TITLE = ?`;
+      const dupResult = await executeDbQuery(dupQuery, [input.COMP_NM, input.JOB_TITLE], false, apiName, port, connection);
       if (Number(dupResult[0]?.count) > 0) {
         await connection.rollback();
         res.status(409).json({ status: 2, result: "Job already exists." });
@@ -42,8 +42,8 @@ export default class JobsController {
       const image_url = await uploadImage(input.IMAGE_URL);
 
       // Insert the new job record into the JOBS table.
-      const insertQuery = ` INSERT INTO JOBS ( CITY_ID, JOB_ID, DESCRIPTION, JOB_TYPE, EXPERIENCE, SKILLS, LAST_DATE, COMP_NM, MOBILE, EMAIL, WEBSITE, PACKAGE, COMP_ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_ON ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW()) `;
-      const params = [ input.CITY_ID, newId, input.DESCRIPTION, input.JOB_TYPE, input.EXPERIENCE, input.SKILLS, input.LAST_DATE, input.COMP_NM, input.MOBILE, input.EMAIL, input.WEBSITE, input.PACKAGE, input.COMP_ADDRESS, input.STATUS, image_url, input.CREATED_BY];
+      const insertQuery = ` INSERT INTO JOBS ( CITY_ID, JOB_ID, JOB_TITLE, DESCRIPTION, JOB_TYPE, EXPERIENCE, SKILLS, LAST_DATE, COMP_NM, MOBILE, EMAIL, WEBSITE, PACKAGE, COMP_ADDRESS, STATUS, IMAGE_URL, CREATED_BY ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) `;
+      const params = [ input.CITY_ID, newId, input.DESCRIPTION, input.JOB_TITLE, input.JOB_TYPE, input.EXPERIENCE, input.SKILLS, input.LAST_DATE, input.COMP_NM, input.MOBILE, input.EMAIL, input.WEBSITE, input.PACKAGE, input.COMP_ADDRESS, input.STATUS, image_url, input.CREATED_BY];
       const insertResult = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
       await connection.commit();
       const results = {message: "Job created", jobId: newId, affectedRows: insertResult.affectedRows};
@@ -60,7 +60,7 @@ export default class JobsController {
   async getAllJobs(req: Request, res: Response): Promise<void> {
     const apiName = "job/read-all";
     const port = req.socket.localPort!;
-    const query = ` SELECT CITY_ID, JOB_ID, DESCRIPTION, JOB_TYPE, EXPERIENCE, SKILLS, LAST_DATE, COMP_NM, MOBILE, EMAIL, WEBSITE, PACKAGE, COMP_ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_ON, EDITED_BY, EDITED_ON FROM JOBS `;
+    const query = ` SELECT CITY_ID, JOB_ID, JOB_TITLE, DESCRIPTION, JOB_TYPE, EXPERIENCE, SKILLS, LAST_DATE, COMP_NM, MOBILE, EMAIL, WEBSITE, PACKAGE, COMP_ADDRESS, STATUS, IMAGE_URL, CREATED_BY, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, EDITED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM JOBS `;
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
       res.json({ status: 0, result: rows });
@@ -71,10 +71,10 @@ export default class JobsController {
 
   // Get Job by ID Endpoint
   async getJobById(req: Request, res: Response): Promise<void> {
-    const apiName = "job/read";
+    const apiName = "job/read";   
     const port = req.socket.localPort!;
     const jobId = req.query.id || "";
-    const query = ` SELECT CITY_ID, JOB_ID, DESCRIPTION, JOB_TYPE, EXPERIENCE, SKILLS, LAST_DATE, COMP_NM, MOBILE, EMAIL, WEBSITE, PACKAGE, COMP_ADDRESS, STATUS, IMAGE_URL, CREATED_BY, CREATED_ON, EDITED_BY, EDITED_ON FROM JOBS WHERE JOB_ID = ? `;
+    const query = ` SELECT CITY_ID, JOB_ID, JOB_TITLE, DESCRIPTION, JOB_TYPE, EXPERIENCE, SKILLS, LAST_DATE, COMP_NM, MOBILE, EMAIL, WEBSITE, PACKAGE, COMP_ADDRESS, STATUS, IMAGE_URL, CREATED_BY, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, EDITED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM JOBS WHERE JOB_ID = ? `;
     try {
       const rows = await executeDbQuery(query, [jobId], false, apiName, port);
       res.json({ status: 0, result: rows });
@@ -94,8 +94,8 @@ export default class JobsController {
       await connection.beginTransaction();
 
       // Duplicate check: Exclude the current record from the duplicate search.
-      const dupQuery = "SELECT COUNT(*) as count FROM JOBS WHERE COMP_NM = ? AND DESCRIPTION = ?";
-      const dupResult = await executeDbQuery(dupQuery, [input.COMP_NM, input.DESCRIPTION], false, apiName, port, connection);
+      const dupQuery = "SELECT COUNT(*) as count FROM JOBS WHERE COMP_NM = ? AND JOB_TITLE = ?";
+      const dupResult = await executeDbQuery(dupQuery, [input.COMP_NM, input.JOB_TITLE], false, apiName, port, connection);
       if (Number(dupResult[0]?.count) > 0) {
         await connection.rollback();
         res.status(409).json({ status: 2, result: "Job already exists." });
@@ -105,8 +105,8 @@ export default class JobsController {
       // Upload image.
       const image_url = await uploadImage(input.IMAGE_URL);
       // Update the job record.
-      const updateQuery = ` UPDATE JOBS SET CITY_ID = ?, DESCRIPTION = ?, JOB_TYPE = ?, EXPERIENCE = ?, SKILLS = ?, LAST_DATE = ?, COMP_NM = ?, MOBILE = ?, EMAIL = ?, WEBSITE = ?, PACKAGE = ?, COMP_ADDRESS = ?, STATUS = ?, IMAGE_URL = ?, EDITED_BY = ?, EDITED_ON = NOW() WHERE JOB_ID = ? `;
-      const params = [ input.CITY_ID, input.DESCRIPTION, input.JOB_TYPE, input.EXPERIENCE, input.SKILLS, input.LAST_DATE, input.COMP_NM, input.MOBILE, input.EMAIL, input.WEBSITE, input.PACKAGE, input.COMP_ADDRESS, input.STATUS, image_url, input.EDITED_BY, input.JOB_ID, ];
+      const updateQuery = ` UPDATE JOBS SET CITY_ID = ?, JOB_TITLE=?, DESCRIPTION = ?, JOB_TYPE = ?, EXPERIENCE = ?, SKILLS = ?, LAST_DATE = ?, COMP_NM = ?, MOBILE = ?, EMAIL = ?, WEBSITE = ?, PACKAGE = ?, COMP_ADDRESS = ?, STATUS = ?, IMAGE_URL = ?, EDITED_BY = ? WHERE JOB_ID = ? `;
+      const params = [ input.CITY_ID, input.JOB_TITLE, input.DESCRIPTION, input.JOB_TYPE, input.EXPERIENCE, input.SKILLS, input.LAST_DATE, input.COMP_NM, input.MOBILE, input.EMAIL, input.WEBSITE, input.PACKAGE, input.COMP_ADDRESS, input.STATUS, image_url, input.CREATED_BY, input.JOB_ID, ];
       await executeDbQuery(updateQuery, params, true, apiName, port, connection);
       await connection.commit();
       const results = {message: "Job updated"};
