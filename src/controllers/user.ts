@@ -316,7 +316,7 @@ class UserController {
       input.ROLE_NAME,
       input.DESCRIPTION,
       input.STATUS,
-      input.created_by,
+      input.CREATED_BY,
       input.ROLE_ID,
     ];
     try {

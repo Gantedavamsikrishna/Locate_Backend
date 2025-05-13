@@ -43,7 +43,7 @@ export default class NewsFeedController {
 
     // Insert new news feed.
     const insertQuery = `INSERT INTO NEWS_FEED (CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, FEED_DATE, STATUS, CREATED_BY) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-    const params = [ input.city_id, newId, input.FEED_HEAD, input.FEED_MATTER, image_url, input.FEED_DATE, input.STATUS, input.CREATED_BY ];
+    const params = [ '001', newId, input.FEED_HEAD, input.FEED_MATTER, image_url, input.FEED_DATE, 'P', input.CREATED_BY ];
     const insertResult = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
     await connection.commit();
 
@@ -103,7 +103,7 @@ export default class NewsFeedController {
 
     const image_url = await uploadImage(input.IMAGE_URL);
     const updateQuery = ` UPDATE NEWS_FEED SET CITY_ID = ?, FEED_HEAD = ?, FEED_MATTER = ?, IMAGE_URL = ?, FEED_DATE = ?, STATUS = ?, EDITED_BY = ? WHERE FEED_ID = ? `;
-    const params = [ input.city_id, input.FEED_HEAD, input.FEED_MATTER, image_url, input.FEED_DATE, input.STATUS, input.CREATED_BY, input.FEED_ID ];
+    const params = [ input.CITY_ID, input.FEED_HEAD, input.FEED_MATTER, image_url, input.FEED_DATE, input.STATUS, input.CREATED_BY, input.FEED_ID ];
 
     try {
       const result = await executeDbQuery(updateQuery, params, true, apiName, port);

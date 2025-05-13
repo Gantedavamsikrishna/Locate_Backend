@@ -54,3 +54,4 @@ jest-cache/
 /dist
 /logs
 *.log
+/.vs
