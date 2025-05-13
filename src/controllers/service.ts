@@ -64,6 +64,10 @@ export default class ServiceController {
   async getAllServices(req: Request, res: Response) {
     const apiName = "service/read-all";
     const port = req.socket.localPort!;
+
+    const headers=req.headers['userid'];
+    console.log('headers is',headers);
+    
     const query = ` SELECT CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, DATE_FORMAT(CREATED_AT, '%d/%m/%Y %H:%i') AS CREATED_ON, UPDATED_BY, DATE_FORMAT(UPDATED_AT, '%d/%m/%Y %H:%i') AS EDITED_ON FROM SERVICES `;
 
     try {
