@@ -20,7 +20,7 @@ class UserController {
     this.router.post("/users", this.createUser.bind(this));
     this.router.post("/login", this.Login.bind(this));
 
-    this.router.get("/roles", this.getAllRoles.bind(this));
+    this.router.get("/roles", authenticateToken as any, this.getAllRoles.bind(this));
     this.router.put("/roles", this.updateRole.bind(this));
     this.router.post("/roles", this.createRole.bind(this));
   }
@@ -67,7 +67,7 @@ class UserController {
         const accessToken = jwt.sign(
           { userId: user.USER_ID, role: user.ROLE_NAME },
           secretKey,
-          { expiresIn: "15m" }
+          // { expiresIn: "15m" }
         );
 
         Response.json({

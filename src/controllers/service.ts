@@ -1,6 +1,7 @@
 import express, { Request, Response, Application } from "express";
 import { pool, executeDbQuery } from "../db";
 import { uploadImage } from "../utils/cloudinaryUtil";
+import { authenticateToken } from "../middleWare/authMiddleWare";
 
 export default class ServiceController {
   public router = express.Router();
@@ -8,7 +9,7 @@ export default class ServiceController {
   constructor(app: Application) {
     app.use("/api/service", this.router);
 
-    this.router.get("/services", this.getAllServices.bind(this));
+    this.router.get("/services", authenticateToken as any, this.getAllServices.bind(this));
     this.router.get("/servicesbyid", this.getServiceById.bind(this));
     this.router.put("/services", this.updateService.bind(this));
     this.router.post("/services", this.createService.bind(this));
