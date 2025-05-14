@@ -94,13 +94,7 @@ export default class ServiceController {
      let connection: any;
     connection = await pool.getConnection();
     await connection.beginTransaction();
-    const chekdup = ` SELECT COUNT(*) as count FROM SERVICES WHERE NAME=? AND DESCRIPTION=?`;
-        const dupResult = await executeDbQuery(chekdup, [input.NAME, input.DESCRIPTION], false, apiName, port, connection);
-        if (Number(dupResult[0]?.count) > 0) {
-            await connection.rollback();
-            res.status(409).json({ status: 2, result: "Service already exists." });
-            return;
-        }
+
     const image_url = await uploadImage(input.IMAGE_URL);
     const query = ` UPDATE SERVICES SET  NAME = ?, DESCRIPTION = ?, IMAGE_URL = ?, STATUS = ?, UPDATED_BY = ? WHERE ID = ? `;
     const params = [ input.NAME, input.DESCRIPTION, image_url, input.STATUS, input.CREATED_BY, input.ID];
@@ -191,14 +185,6 @@ export default class ServiceController {
     let connection: any;
     connection = await pool.getConnection();
       await connection.beginTransaction();
-
-      const chekdup = ` SELECT COUNT(*) as count FROM SUB_SERVICES WHERE SUB_SERVICES_NAME=? AND BUSINESS_NAME=?`;
-        const dupResult = await executeDbQuery(chekdup, [input.SUB_SERVICES_NAME, input.BUSINESS_NAME], false, apiName, port, connection);
-        if (Number(dupResult[0]?.count) > 0) {
-            await connection.rollback();
-            res.status(409).json({ status: 2, result: "Sub Service already exists." });
-            return;
-        }
 
       const image_url1 = await uploadImage(input.IMAGE_URL1);
       const image_url2 = await uploadImage(input.IMAGE_URL2);

@@ -81,7 +81,7 @@ export default class NewsFeedController {
       const rows = await executeDbQuery(query, [feedId], false, apiName, port);
       res.json({ status: 0, result: rows });
     } catch (err: any) {
-      res.status(500).json({ status: 1, result: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     }
   }
 
@@ -94,7 +94,7 @@ export default class NewsFeedController {
     await connection.beginTransaction();
     // Duplicate check: count rows where FEED_HEAD and FEED_MATTER match.
     const chekdup = `SELECT COUNT(*) as count FROM NEWS_FEED WHERE FEED_HEAD=? AND FEED_MATTER=?`;
-    const dupResult = await executeDbQuery(chekdup, [input.feed_head, input.feed_matter], false, apiName, port, connection);
+    const dupResult = await executeDbQuery(chekdup, [input.FEED_HEAD, input.FEED_MATTER], false, apiName, port, connection);
     if (Number(dupResult[0]?.count) > 0) {
       await connection.rollback();
       res.status(409).json({ status: 2, result: "News feed already exists." });

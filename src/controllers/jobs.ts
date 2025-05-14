@@ -29,7 +29,8 @@ export default class JobsController {
       const dupResult = await executeDbQuery(dupQuery, [input.COMP_NM, input.JOB_TITLE], false, apiName, port, connection);
       if (Number(dupResult[0]?.count) > 0) {
         await connection.rollback();
-        res.status(409).json({ status: 2, result: "Job already exists." });
+        res.json({ status: 0, result: "Job already exists." });
+
         return;
       }
 
@@ -79,7 +80,7 @@ export default class JobsController {
       const rows = await executeDbQuery(query, [jobId], false, apiName, port);
       res.json({ status: 0, result: rows });
     } catch (err: any) {
-      res.status(500).json({ status: 1, result: err.toString() });
+      res.json({ status: 1, result: err.toString() });
     }
   }
 
@@ -92,15 +93,6 @@ export default class JobsController {
     try {
       connection = await pool.getConnection();
       await connection.beginTransaction();
-
-      // Duplicate check: Exclude the current record from the duplicate search.
-      const dupQuery = "SELECT COUNT(*) as count FROM JOBS WHERE COMP_NM = ? AND JOB_TITLE = ?";
-      const dupResult = await executeDbQuery(dupQuery, [input.COMP_NM, input.JOB_TITLE], false, apiName, port, connection);
-      if (Number(dupResult[0]?.count) > 0) {
-        await connection.rollback();
-        res.status(409).json({ status: 2, result: "Job already exists." });
-        return;
-      }
 
       // Upload image.
       const image_url = await uploadImage(input.IMAGE_URL);

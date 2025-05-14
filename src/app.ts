@@ -1,18 +1,18 @@
 import express from "express";
 import http from "http";
 import httpProxy from "http-proxy";
-import userRoutes from "./controllers/user";
-import serviceRoutes from "./controllers/service";
+import { logger } from "./db"; // Import the centralized logger
 import UserController from "./controllers/user";
+import ServiceController from "./controllers/service";
 import NewsFeedController from "./controllers/newsFeed";
 import JobsController from "./controllers/jobs";
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 new UserController(app);
-new serviceRoutes(app)
-new NewsFeedController(app)
-new JobsController(app)
+new ServiceController(app);
+new NewsFeedController(app);
+new JobsController(app);
 
 // ------------------------------------------------------------------
 // LOAD BALANCER SETUP
@@ -29,7 +29,7 @@ function loadServers(count: number, appInstance: express.Express) {
       if (addr && typeof addr === "object") {
         const url = `http://localhost:${addr.port}`;
         servers.push(url);
-        console.log(`Worker ${i} listening on port ${addr.port}`);
+        logger.info(`Worker ${i} listening on port ${addr.port}`);
       }
     });
   }
@@ -50,22 +50,24 @@ const lbServer = http.createServer((req, res) => {
   const target = servers[cur];
   cur = (cur + 1) % servers.length;
 
-  console.log(`Routing request to ${target}`);
+  logger.info(`Routing request to ${target}`);
+
   proxy.web(
     req,
     res,
     { target },
     (err: any) => {
-      console.error("Proxy error: " + err.toString());
+      logger.error("Proxy error: " + err.toString());
       res.writeHead(500, { "Content-Type": "text/plain" });
       res.end("Something went wrong.");
     }
   );
-  res.on("finish", () =>
-    console.log(`${req.method} ${req.url} completed in ${Date.now() - start}ms`)
-  );
+
+  res.on("finish", () => {
+    logger.info(`${req.method} ${req.url} completed in ${Date.now() - start}ms`);
+  });
 });
 
 lbServer.listen(loadBalancerPort, () => {
-  console.log(`Load balancer listening on port ${loadBalancerPort}`);
+  logger.info(`Load balancer listening on port ${loadBalancerPort}`);
 });

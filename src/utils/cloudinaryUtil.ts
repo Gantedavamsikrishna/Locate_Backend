@@ -13,6 +13,7 @@ export async function uploadImage(imagePath: string): Promise<string> {
     return result.secure_url;
   } catch (error:any) {
     console.log("Cloudinary upload error:", error.toString());
-    return "";
+    
+    return "";  
   }
 }
