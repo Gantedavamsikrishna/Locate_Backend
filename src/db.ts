@@ -28,7 +28,7 @@ const transport = new DailyRotateFile({
   datePattern: "DD-MM-YYYY",
   maxSize: process.env.LOG_MAX_SIZE || "10k",  // Use lower-case if necessary, or "10240"
   maxFiles: process.env.LOG_MAX_FILES || "1d",
-  zippedArchive: true,
+  zippedArchive: false,
   // Optionally, enable auditing to track rotations
   auditFile: path.join(logsDir, ".audit.json"),
 });
@@ -60,23 +60,27 @@ export async function executeDbQuery(
   useTransaction: boolean,
   apiName: string,
   port?: number,
-  connection?: PoolConnection
+  externalConnection?: PoolConnection
 ): Promise<any> {
   const start = Date.now();
-  let conn: PoolConnection | undefined;
+  let conn: PoolConnection | undefined = externalConnection;
   let localConnection = false;
 
   try {
-    if (connection) {
-      conn = connection;
-    } else {
+    if (!conn) {
       conn = await pool.getConnection();
       localConnection = true;
-      if (useTransaction) await conn.beginTransaction();
+      if (useTransaction) {
+        await conn.beginTransaction();
+      }
     }
 
     const [result] = await conn.execute(query, params);
-    if (!connection && useTransaction) await conn.commit();
+
+    // Commit only if we started the transaction ourselves.
+    if (localConnection && useTransaction) {
+      await conn.commit();
+    }
 
     logToFile({
       timestamp: new Date().toLocaleString(),
@@ -84,13 +88,17 @@ export async function executeDbQuery(
       queryExecuted: query,
       params,
       executionTime: Date.now() - start,
-      resultCount: Array.isArray(result) ? result.length : (result as any).affectedRows,
+      resultCount: Array.isArray(result)
+        ? result.length
+        : (result as any).affectedRows,
       port,
     });
 
     return result;
   } catch (err: any) {
-    if (!connection && useTransaction && conn) await conn.rollback();
+    if (localConnection && useTransaction && conn) {
+      await conn.rollback();
+    }
 
     logToFile({
       timestamp: new Date().toLocaleString(),
@@ -105,9 +113,12 @@ export async function executeDbQuery(
 
     throw err;
   } finally {
-    if (localConnection && conn) conn.release();
+    if (localConnection && conn) {
+      conn.release();
+    }
   }
 }
+
 
 // Export the logger for use in other parts of your application
 export { logger };

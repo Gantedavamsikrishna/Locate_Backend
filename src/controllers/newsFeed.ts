@@ -30,7 +30,7 @@ export default class NewsFeedController {
     const dupResult = await executeDbQuery(chekdup, [input.feed_head, input.feed_matter], false, apiName, port, connection);
     if (Number(dupResult[0]?.count) > 0) {
       await connection.rollback();
-      res.status(409).json({ status: 2, result: "News feed already exists." });
+      res.json({ status: 2, result: "News feed already exists." });
       return;
     }
 
@@ -97,7 +97,7 @@ export default class NewsFeedController {
     const dupResult = await executeDbQuery(chekdup, [input.FEED_HEAD, input.FEED_MATTER], false, apiName, port, connection);
     if (Number(dupResult[0]?.count) > 0) {
       await connection.rollback();
-      res.status(409).json({ status: 2, result: "News feed already exists." });
+      res.json({ status: 2, result: "News feed already exists." });
       return;
     }
 

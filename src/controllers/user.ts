@@ -157,7 +157,7 @@ class UserController {
 
   async getAllRoles(req: Request, res: Response) {
     const apiName = "role/read-all"; const port = req.socket.localPort!;
-    const query = `SELECT CITY_ID, ROLE_ID, ROLE_NAME, DESCRIPTION, STATUS, DATE_FORMAT(CREATED_AT, '%d/%m/%Y %H:%i') AS CREATED_ON, CREATED_BY, DATE_FORMAT(UPDATED_AT, '%d/%m/%Y %H:%i') AS EDITED_ON, UPDATED_BY FROM ROLES`;
+    const query = `SELECT CITY_ID, ROLE_ID, ROLE_NAME, DESCRIPTION, STATUS, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, CREATED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON, UPDATED_BY FROM ROLES`;
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
       res.json({ status: 0, result: rows });
