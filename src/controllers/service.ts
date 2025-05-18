@@ -19,9 +19,43 @@ export default class ServiceController {
     this.router.put("/SubServices", this.updateSubService.bind(this));
     this.router.post("/SubServices", this.createSubService.bind(this));
 
+    this.router.get("/Servicesnames", this.Servicesnames.bind(this));
+    this.router.get("/SubServicesnames", this.SubServicesnames.bind(this));
+
+
+
     
   }
+  async Servicesnames(req: Request, res: Response) {
+    const apiName = "service/read-all";
+    const port = req.socket.localPort!;
 
+    const headers=req.headers['userid'];
+    // console.log('headers is',headers);
+    
+    const query = ` SELECT  ID, NAME FROM SERVICES Where Status ='A' `;
+
+    try {
+      const rows = await executeDbQuery(query, [], false, apiName, port);
+      res.json({ status: 0, result: rows });
+    } catch (err: any) {
+      res.json({ status: 1, result: err.toString() });
+    }
+  }
+ async SubServicesnames(req: Request, res: Response) {
+    const apiName = "subservice/read-all";
+    const port = req.socket.localPort!;
+    const input = req.query;
+
+    const query = "SELECT SUB_SERVICE_ID as ID, NAME FROM SUB_SERVICES WHERE STATUS='A' and SERVICE_ID = ? ";
+
+    try {
+      const rows = await executeDbQuery(query, [input.ID], false, apiName, port);
+      res.json({ status: 0, result: rows });
+    } catch (err: any) {
+      res.json({ status: 1, result: err.toString() });
+    }
+  }
   async createService(req: Request, res: Response) {
     const apiName = "service/create";
     const port = req.socket.localPort!;
@@ -118,13 +152,16 @@ export default class ServiceController {
     const apiName = "subservice/create";
     const port = req.socket.localPort!;
     let input = req.body;
+    if(!input.CITY_ID){
+      input.CITY_ID='001'
+    }
     let connection;
 
     try {
       connection = await pool.getConnection();
       await connection.beginTransaction();
 
-      const checkDup = await executeDbQuery("SELECT COUNT(*) as count FROM SUB_SERVICES WHERE NAME = ? AND SERVICE_ID = ?", [input.NAME, input.SERVICE_ID], false, apiName, port, connection);
+      const checkDup = await executeDbQuery("SELECT COUNT(*) as count FROM SUB_SERVICES WHERE NAME = ? AND SERVICE_ID = ?", [input.NAME, input.ServiceID], false, apiName, port, connection);
       if (Number(checkDup[0]?.count) > 0) {
         await connection.rollback();
         res.json({ status: 2, result: "Sub Service already exists." });
@@ -137,7 +174,7 @@ export default class ServiceController {
       const imageUrl = await uploadImage(input.IMAGE_URL);
 
       const insertQuery = "INSERT INTO SUB_SERVICES (CITY_ID, SERVICE_ID, SUB_SERVICE_ID, NAME, DESCRIPTION, STATUS, IMAGE_URL, CREATED_BY) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-      const params = [input.CITY_ID, input.SERVICE_ID, newId, input.NAME, input.DESCRIPTION, input.STATUS, imageUrl, input.CREATED_BY];
+      const params = [input.CITY_ID, input.ServiceID, newId, input.NAME, input.DESCRIPTION, input.STATUS, imageUrl, input.CREATED_BY];
 
       const result = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
       await connection.commit();
@@ -154,7 +191,7 @@ export default class ServiceController {
   async getAllSubServices(req: Request, res: Response) {
     const apiName = "subservice/read-all";
     const port = req.socket.localPort!;
-    const query = "SELECT SUB.CITY_ID, S.ID, S.NAME, SUB.SERVICE_ID, SUB.SUB_SERVICE_ID, SUB.NAME, SUB.DESCRIPTION, SUB.STATUS, SUB.IMAGE_URL, SUB.CREATED_BY, DATE_FORMAT(SUB.CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, SUB.EDITED_BY, DATE_FORMAT(SUB.EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM SUB_SERVICES SUB LEFT JOIN SERVICES S ON SUB.SERVICE_ID = S.ID";
+    const query = "SELECT  S.NAME as Service_name, SUB.SERVICE_ID, SUB.SUB_SERVICE_ID as ID, SUB.NAME, SUB.DESCRIPTION, SUB.STATUS, SUB.IMAGE_URL, SUB.CREATED_BY, DATE_FORMAT(SUB.CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, SUB.EDITED_BY, DATE_FORMAT(SUB.EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM SUB_SERVICES SUB LEFT JOIN SERVICES S ON SUB.SERVICE_ID = S.ID";
 
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
@@ -188,11 +225,11 @@ export default class ServiceController {
     try {
       connection = await pool.getConnection();
       await connection.beginTransaction();
-
+const editedby=req.headers['userid']||'';
       const imageUrl = await uploadImage(input.IMAGE_URL);
 
       const query = "UPDATE SUB_SERVICES SET CITY_ID = ?, SERVICE_ID = ?, NAME = ?, DESCRIPTION = ?, STATUS = ?, IMAGE_URL = ?, EDITED_BY = ? WHERE SUB_SERVICE_ID = ?";
-      const params = [input.CITY_ID, input.SERVICE_ID, input.NAME, input.DESCRIPTION, input.STATUS, imageUrl, input.EDITED_BY, input.SUB_SERVICE_ID];
+      const params = ['001', input.ServiceID, input.NAME, input.DESCRIPTION, input.STATUS, imageUrl, editedby, input.ID];
 
       const result = await executeDbQuery(query, params, true, apiName, port);
       await connection.commit();

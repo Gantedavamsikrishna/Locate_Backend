@@ -26,7 +26,7 @@ const transport = new DailyRotateFile({
   dirname: logsDir,
   filename: "logs_%DATE%.log",
   datePattern: "DD-MM-YYYY",
-  maxSize: process.env.LOG_MAX_SIZE || "10k",  // Use lower-case if necessary, or "10240"
+  maxSize: process.env.LOG_MAX_SIZE || "300m",  // Use lower-case if necessary, or "10240"
   maxFiles: process.env.LOG_MAX_FILES || "1d",
   zippedArchive: false,
   // Optionally, enable auditing to track rotations
