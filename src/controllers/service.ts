@@ -340,7 +340,7 @@ async updateBusinessProfile(req: Request, res: Response) {
 
     const query = `UPDATE BUSSINESS_PROFILE SET CITY_ID = ?, SERVICE_ID = ?, SUB_SERVICE_ID = ?, BUSINESS_NAME = ?, OWNER_NAME = ?, BUSINESS_TYPE = ?, MOBILE = ?, ADDRESS = ?, WEEKDAY_TIMINGS = ?, SUNDAY_TIMINGS = ?, WEBSITE_URL = ?, EMAIL = ?, DESCRIPTION = ?, LATITUDE = ?, LONGITUDE = ?, DEFAULT_CONTACT = ?, IMAGE_URL1 = ?, IMAGE_URL2 = ?, IMAGE_URL3 = ?, IMAGE_URL4 = ?, IMAGE_URL5 = ?, STATUS = ?, EDITED_BY = ? WHERE BUSINESS_ID = ?`;
 
-    const params = [input.CITY_ID, input.SERVICE_ID, input.SUB_SERVICE_ID, input.BUSINESS_NAME, input.OWNER_NAME, input.BUSINESS_TYPE, input.MOBILE, input.ADDRESS, input.WEEKDAY_TIMINGS, input.SUNDAY_TIMINGS, input.WEBSITE_URL, input.EMAIL, input.DESCRIPTION, input.LATITUDE, input.LONGITUDE, input.DEFAULT_CONTACT, image_url1, image_url2, image_url3, image_url4, image_url5, input.STATUS, userId, input.BUSINESS_ID];
+    const params = [input.CITY_ID, input.ServiceID, input.SubServiceID, input.BUSINESS_NAME, input.OWNER_NAME, input.BUSINESS_TYPE, input.MOBILE, input.ADDRESS, input.WEEKDAY_TIMINGS, input.SUNDAY_TIMINGS, input.WEBSITE_URL, input.EMAIL, input.DESCRIPTION, input.LATITUDE, input.LONGITUDE, input.DEFAULT_CONTACT, image_url1, image_url2, image_url3, image_url4, image_url5, input.STATUS, userId, input.BUSINESS_ID];
 
     const result = await executeDbQuery(query, params, true, apiName, port);
     await connection.commit();
