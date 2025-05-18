@@ -73,7 +73,7 @@ export default class ServiceController {
         const dupResult = await executeDbQuery(chekdup, [input.NAME, input.DESCRIPTION], false, apiName, port, connection);
         if (Number(dupResult[0]?.count) > 0) {
             await connection.rollback();
-            res.status(409).json({ status: 2, result: "Service already exists." });
+            res.json({ status: 2, result: "Service already exists." });
             return;
         }
 
@@ -296,7 +296,7 @@ async getAllBusinessProfiles(req: Request, res: Response) {
   const apiName = "businessprofile/read-all";
   const port = req.socket.localPort!;
 
-  const query = `SELECT CITY_ID, SERVICE_ID, SUB_SERVICE_ID, BUSINESS_ID, BUSINESS_NAME, OWNER_NAME, BUSINESS_TYPE, MOBILE, ADDRESS, WEEKDAY_TIMINGS, SUNDAY_TIMINGS, WEBSITE_URL, EMAIL, DESCRIPTION, LATITUDE, LONGITUDE, DEFAULT_CONTACT, IMAGE_URL1, IMAGE_URL2, IMAGE_URL3, IMAGE_URL4, IMAGE_URL5, STATUS, CREATED_BY, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, EDITED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM BUSSINESS_PROFILE`;
+  const query = `SELECT B.CITY_ID, B.SERVICE_ID, S.NAME SERVICE, B.SUB_SERVICE_ID, SUB.NAME AS SUB_SERVICE, B.BUSINESS_ID, B.BUSINESS_NAME, B.OWNER_NAME, B.BUSINESS_TYPE, B.MOBILE, B.ADDRESS, B.WEEKDAY_TIMINGS, B.SUNDAY_TIMINGS, B.WEBSITE_URL, B.EMAIL, B.DESCRIPTION, B.LATITUDE, B.LONGITUDE, B.DEFAULT_CONTACT, B.IMAGE_URL1, B.IMAGE_URL2, B.IMAGE_URL3, B.IMAGE_URL4, B.IMAGE_URL5, B.STATUS, B.CREATED_BY, DATE_FORMAT(B.CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, B.EDITED_BY, DATE_FORMAT(B.EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM BUSSINESS_PROFILE B LEFT JOIN SERVICES S ON S.ID=B.SERVICE_ID LEFT JOIN SUB_SERVICES SUB ON SUB.SUB_SERVICE_ID=B.SUB_SERVICE_ID`;
 
   try {
     const rows = await executeDbQuery(query, [], false, apiName, port);
@@ -309,12 +309,12 @@ async getAllBusinessProfiles(req: Request, res: Response) {
 async getBusinessProfileById(req: Request, res: Response) {
   const apiName = "businessprofile/read";
   const port = req.socket.localPort!;
-  const subServiceId = req.query.id || "";
+  const BusinessId = req.query.id || "";
 
-  const query = `SELECT CITY_ID, SERVICE_ID, SUB_SERVICE_ID, BUSINESS_ID, BUSINESS_NAME, OWNER_NAME, BUSINESS_TYPE, MOBILE, ADDRESS, WEEKDAY_TIMINGS, SUNDAY_TIMINGS, WEBSITE_URL, EMAIL, DESCRIPTION, LATITUDE, LONGITUDE, DEFAULT_CONTACT, IMAGE_URL1, IMAGE_URL2, IMAGE_URL3, IMAGE_URL4, IMAGE_URL5, STATUS, CREATED_BY, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, EDITED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM BUSSINESS_PROFILE WHERE SUB_SERVICE_ID = ?`;
+  const query = `SELECT B.CITY_ID, B.SERVICE_ID, S.NAME SERVICE, B.SUB_SERVICE_ID, SUB.NAME AS SUB_SERVICE, B.BUSINESS_ID, B.BUSINESS_NAME, B.OWNER_NAME, B.BUSINESS_TYPE, B.MOBILE, B.ADDRESS, B.WEEKDAY_TIMINGS, B.SUNDAY_TIMINGS, B.WEBSITE_URL, B.EMAIL, B.DESCRIPTION, B.LATITUDE, B.LONGITUDE, B.DEFAULT_CONTACT, B.IMAGE_URL1, B.IMAGE_URL2, B.IMAGE_URL3, B.IMAGE_URL4, B.IMAGE_URL5, B.STATUS, B.CREATED_BY, DATE_FORMAT(B.CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, B.EDITED_BY, DATE_FORMAT(B.EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM BUSSINESS_PROFILE B LEFT JOIN SERVICES S ON S.ID=B.SERVICE_ID LEFT JOIN SUB_SERVICES SUB ON SUB.SUB_SERVICE_ID=B.SUB_SERVICE_ID WHERE B.BUSINESS_ID = ?`;
 
   try {
-    const rows = await executeDbQuery(query, [subServiceId], false, apiName, port);
+    const rows = await executeDbQuery(query, [BusinessId], false, apiName, port);
     res.json({ status: 0, result: rows });
   } catch (err: any) {
     res.json({ status: 1, result: err.toString() });
@@ -338,9 +338,9 @@ async updateBusinessProfile(req: Request, res: Response) {
     const image_url4 = await uploadImage(input.IMAGE_URL4);
     const image_url5 = await uploadImage(input.IMAGE_URL5);
 
-    const query = `UPDATE BUSSINESS_PROFILE SET CITY_ID = ?, SERVICE_ID = ?, BUSINESS_ID = ?, BUSINESS_NAME = ?, OWNER_NAME = ?, BUSINESS_TYPE = ?, MOBILE = ?, ADDRESS = ?, WEEKDAY_TIMINGS = ?, SUNDAY_TIMINGS = ?, WEBSITE_URL = ?, EMAIL = ?, DESCRIPTION = ?, LATITUDE = ?, LONGITUDE = ?, DEFAULT_CONTACT = ?, IMAGE_URL1 = ?, IMAGE_URL2 = ?, IMAGE_URL3 = ?, IMAGE_URL4 = ?, IMAGE_URL5 = ?, STATUS = ?, EDITED_BY = ? WHERE SUB_SERVICE_ID = ?`;
+    const query = `UPDATE BUSSINESS_PROFILE SET CITY_ID = ?, SERVICE_ID = ?, SUB_SERVICE_ID = ?, BUSINESS_NAME = ?, OWNER_NAME = ?, BUSINESS_TYPE = ?, MOBILE = ?, ADDRESS = ?, WEEKDAY_TIMINGS = ?, SUNDAY_TIMINGS = ?, WEBSITE_URL = ?, EMAIL = ?, DESCRIPTION = ?, LATITUDE = ?, LONGITUDE = ?, DEFAULT_CONTACT = ?, IMAGE_URL1 = ?, IMAGE_URL2 = ?, IMAGE_URL3 = ?, IMAGE_URL4 = ?, IMAGE_URL5 = ?, STATUS = ?, EDITED_BY = ? WHERE BUSINESS_ID = ?`;
 
-    const params = [input.CITY_ID, input.SERVICE_ID, input.BUSINESS_ID, input.BUSINESS_NAME, input.OWNER_NAME, input.BUSINESS_TYPE, input.MOBILE, input.ADDRESS, input.WEEKDAY_TIMINGS, input.SUNDAY_TIMINGS, input.WEBSITE_URL, input.EMAIL, input.DESCRIPTION, input.LATITUDE, input.LONGITUDE, input.DEFAULT_CONTACT, image_url1, image_url2, image_url3, image_url4, image_url5, input.STATUS, userId, input.SUB_SERVICE_ID];
+    const params = [input.CITY_ID, input.SERVICE_ID, input.SUB_SERVICE_ID, input.BUSINESS_NAME, input.OWNER_NAME, input.BUSINESS_TYPE, input.MOBILE, input.ADDRESS, input.WEEKDAY_TIMINGS, input.SUNDAY_TIMINGS, input.WEBSITE_URL, input.EMAIL, input.DESCRIPTION, input.LATITUDE, input.LONGITUDE, input.DEFAULT_CONTACT, image_url1, image_url2, image_url3, image_url4, image_url5, input.STATUS, userId, input.BUSINESS_ID];
 
     const result = await executeDbQuery(query, params, true, apiName, port);
     await connection.commit();
