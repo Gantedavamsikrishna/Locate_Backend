@@ -48,7 +48,7 @@ class UserController {
   // }
   async Login(Request: Request, Response: Response) {
     const apiName = "user/Login";
-    console.log(secretKey);
+    // console.log(secretKey);
     let input = Request.body;
     try {
       let query = `

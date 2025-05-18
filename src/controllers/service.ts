@@ -14,10 +14,10 @@ export default class ServiceController {
     this.router.put("/services", this.updateService.bind(this));
     this.router.post("/services", this.createService.bind(this));
 
-    this.router.get("/sub", this.getAllSubServices.bind(this));
-    this.router.get("/subbyid", this.getSubServiceById.bind(this));
-    this.router.put("/sub", this.updateSubService.bind(this));
-    this.router.post("/sub", this.createSubService.bind(this));
+    this.router.get("/SubServices", this.getAllSubServices.bind(this));
+    this.router.get("/SubServicesbyid", this.getSubServiceById.bind(this));
+    this.router.put("/SubServices", this.updateSubService.bind(this));
+    this.router.post("/SubServices", this.createSubService.bind(this));
 
     
   }
@@ -42,7 +42,7 @@ export default class ServiceController {
 
       const rows = await executeDbQuery( "SELECT MAX(CAST(ID AS UNSIGNED)) AS maxId FROM SERVICES", [], false, apiName, port, connection );
       const newId = (Number(rows[0]?.maxId || 0) + 1).toString().padStart(3, '0');
-      console.log('maxid :',rows[0]?.maxId );
+      // console.log('maxid :',rows[0]?.maxId );
       const image_url = await uploadImage(input.IMAGE_URL);
       
       const insertQuery = ` INSERT INTO SERVICES ( ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY) VALUES ( ?, ?, ?, ?, ?, ?) `;
@@ -66,7 +66,7 @@ export default class ServiceController {
     const port = req.socket.localPort!;
 
     const headers=req.headers['userid'];
-    console.log('headers is',headers);
+    // console.log('headers is',headers);
     
     const query = ` SELECT CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, DATE_FORMAT(CREATED_AT, '%d/%m/%Y %H:%i') AS CREATED_ON, UPDATED_BY, DATE_FORMAT(UPDATED_AT, '%d/%m/%Y %H:%i') AS EDITED_ON FROM SERVICES `;
 
