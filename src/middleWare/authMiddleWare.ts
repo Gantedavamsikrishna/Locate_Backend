@@ -17,14 +17,14 @@ export function authenticateToken(
   const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
-    return res
-      .status(401)
-      .json({ message: "Access denied. No token provided." });
+    return res.json({ status: 1, result: "Access denied. No token provided." });
+
   }
 
   jwt.verify(token, ACCESS_TOKEN_KEY, (err, user) => {
     if (err) {
-      return res.status(403).json({ message: "Invalid or expired token." });
+      res.json({ status: 1, result: "Invalid or expired token." });
+
     }
 
     req.user = user;
