@@ -1,6 +1,7 @@
 import express, { Request, Response, Application } from "express";
 import { pool, executeDbQuery } from "../db";
 import { uploadImage } from "../utils/cloudinaryUtil";
+import { authenticateToken } from "../middleWare/authMiddleWare";
 
 export default class ServiceController {
   public router = express.Router();
@@ -8,7 +9,7 @@ export default class ServiceController {
   constructor(app: Application) {
     app.use("/api/service", this.router);
 
-    this.router.get("/services", this.getAllServices.bind(this));
+    this.router.get("/services", authenticateToken as any, this.getAllServices.bind(this));
     this.router.get("/servicesbyid", this.getServiceById.bind(this));
     this.router.put("/services", this.updateService.bind(this));
     this.router.post("/services", this.createService.bind(this));
@@ -63,6 +64,10 @@ export default class ServiceController {
   async getAllServices(req: Request, res: Response) {
     const apiName = "service/read-all";
     const port = req.socket.localPort!;
+
+    const headers=req.headers['userid'];
+    console.log('headers is',headers);
+    
     const query = ` SELECT CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, DATE_FORMAT(CREATED_AT, '%d/%m/%Y %H:%i') AS CREATED_ON, UPDATED_BY, DATE_FORMAT(UPDATED_AT, '%d/%m/%Y %H:%i') AS EDITED_ON FROM SERVICES `;
 
     try {

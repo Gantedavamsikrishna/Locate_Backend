@@ -18,11 +18,13 @@ export function authenticateToken(
 
   if (!token) {
     return res.json({ status: 1, result: "Access denied. No token provided." });
+
   }
 
   jwt.verify(token, ACCESS_TOKEN_KEY, (err, user) => {
     if (err) {
       res.json({ status: 1, result: "Invalid or expired token." });
+
     }
 
     req.user = user;
