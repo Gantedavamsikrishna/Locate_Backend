@@ -13,10 +13,14 @@ export default class CategoryController {
     this.router.put("/categories", this.updateCategory.bind(this));
     this.router.post("/categories", this.createCategory.bind(this));
 
-    this.router.get("/subcategories", this.getAllSubCategories.bind(this));
-    this.router.get("/subcategorybyid", this.getSubCategoryById.bind(this));
-    this.router.put("/subcategories", this.updateSubCategory.bind(this));
-    this.router.post("/subcategories", this.createSubCategory.bind(this));
+    this.router.get("/SubServices", this.getAllSubCategories.bind(this));
+    this.router.get("/SubServicesbyid", this.getSubCategoryById.bind(this));
+    this.router.put("/SubServices", this.updateSubCategory.bind(this));
+    this.router.post("/SubServices", this.createSubCategory.bind(this));
+    // this.router.get("/subcategories", this.getAllSubCategories.bind(this));
+    // this.router.get("/subcategorybyid", this.getSubCategoryById.bind(this));
+    // this.router.put("/subcategories", this.updateSubCategory.bind(this));
+    // this.router.post("/subcategories", this.createSubCategory.bind(this));
   }
 
   // -------------------------- Category Endpoints -------------------------- //
