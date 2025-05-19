@@ -222,17 +222,17 @@ export default class ServiceController {
   async updateSubService(req: Request, res: Response) {
     const apiName = "subservice/update";
     const port = req.socket.localPort!;
+    const userId = req.headers["userid"] || "";
     let input = req.body;
     let connection: any;
 
     try {
       connection = await pool.getConnection();
       await connection.beginTransaction();
-      const editedby = req.headers["userid"] || "";
       const imageUrl = await uploadImage(input.IMAGE_URL);
 
       const query = "UPDATE SUB_SERVICES SET CITY_ID = ?, SERVICE_ID = ?, NAME = ?, DESCRIPTION = ?, STATUS = ?, IMAGE_URL = ?, EDITED_BY = ? WHERE SUB_SERVICE_ID = ?";
-      const params = ['001', input.ServiceID, input.NAME, input.DESCRIPTION, input.STATUS, imageUrl, editedby, input.ID];
+      const params = ['001', input.ServiceID, input.NAME, input.DESCRIPTION, input.STATUS, imageUrl, userId, input.ID];
 
       const result = await executeDbQuery(query, params, true, apiName, port);
       await connection.commit();

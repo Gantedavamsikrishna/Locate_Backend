@@ -18,6 +18,7 @@ export default class NewsFeedController {
   async createNewsFeed(req: Request, res: Response) {
   const apiName = "newsfeed/create";
   const port = req.socket.localPort!;
+  const userId = req.headers["userid"] || "";
   const input = req.body;
   let connection;
 
@@ -43,7 +44,7 @@ export default class NewsFeedController {
 
     // Insert new news feed.
     const insertQuery = `INSERT INTO NEWS_FEED (CITY_ID, FEED_ID, FEED_HEAD, FEED_MATTER, IMAGE_URL, FEED_DATE, STATUS, CREATED_BY) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-    const params = [ '001', newId, input.FEED_HEAD, input.FEED_MATTER, image_url, input.FEED_DATE, 'P', input.CREATED_BY ];
+    const params = [ '001', newId, input.FEED_HEAD, input.FEED_MATTER, image_url, input.FEED_DATE, 'P', userId ];
     const insertResult = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
     await connection.commit();
 
@@ -88,6 +89,7 @@ export default class NewsFeedController {
   async updateNewsFeed(req: Request, res: Response) {
     const apiName = "newsfeed/update";
     const port = req.socket.localPort!;
+    const userId = req.headers["userid"] || "";
     const input = req.body;
      let connection: any;
      if(!input.CITY_ID){
@@ -106,7 +108,7 @@ export default class NewsFeedController {
 
     const image_url = await uploadImage(input.IMAGE_URL);
     const updateQuery = ` UPDATE NEWS_FEED SET CITY_ID = ?, FEED_HEAD = ?, FEED_MATTER = ?, IMAGE_URL = ?, FEED_DATE = ?,  EDITED_BY = ? WHERE FEED_ID = ? `;
-    const params = [ input.CITY_ID, input.FEED_HEAD, input.FEED_MATTER, image_url, input.FEED_DATE, input.CREATED_BY, input.FEED_ID ];
+    const params = [ input.CITY_ID, input.FEED_HEAD, input.FEED_MATTER, image_url, input.FEED_DATE, input.CREATED_BY, userId ];
 
     try {
       const result = await executeDbQuery(updateQuery, params, true, apiName, port);

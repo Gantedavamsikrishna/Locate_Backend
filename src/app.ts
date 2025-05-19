@@ -8,6 +8,7 @@ import NewsFeedController from "./controllers/newsFeed";
 import JobsController from "./controllers/jobs";
 import CategoryController from "./controllers/categories";
 import EmployeeController from "./controllers/employees";
+import NearLocationController from "./controllers/locform";
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -17,6 +18,7 @@ new NewsFeedController(app);
 new JobsController(app);
 new CategoryController(app);
 new EmployeeController(app);
+new NearLocationController(app);
 
 // ------------------------------------------------------------------
 // LOAD BALANCER SETUP

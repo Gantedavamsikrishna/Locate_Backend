@@ -86,6 +86,7 @@ class UserController {
   async createUser(req: Request, res: Response) {
   const apiName = "user/create";
   const port: number = req.socket.localPort!;
+  const userId = req.headers["userid"] || "";
   let connection;
   let input = req.body;
   try {
@@ -107,7 +108,7 @@ class UserController {
     const image_url = await uploadImage(input.IMAGE_URL);
     const insertQuery = ` INSERT INTO USERS ( CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
       
-    const params = [ input.CITY_ID, newUserId, input.NAME, input.SURNAME, input.FATHER_NAME, input.GENDER, input.DOB, input.MOBILE_NUMBER, input.ALTERNATE_NUMBER, input.EMAIL, input.ROLE, input.ADDRESS, input.STATUS, image_url, input.CREATED_BY ];
+    const params = [ input.CITY_ID, newUserId, input.NAME, input.SURNAME, input.FATHER_NAME, input.GENDER, input.DOB, input.MOBILE_NUMBER, input.ALTERNATE_NUMBER, input.EMAIL, input.ROLE, input.ADDRESS, input.STATUS, image_url, userId ];
       
     const result = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
     await connection.commit();
@@ -150,6 +151,7 @@ class UserController {
   async updateUser(req: Request, res: Response) {
     const apiName = "user/update";
     const port: number = req.socket.localPort!;
+    const userId = req.headers["userid"] || "";
     let input=req.body;
     let connection: any;
     connection = await pool.getConnection();
@@ -157,7 +159,7 @@ class UserController {
 
     const image_url = await uploadImage(input.IMAGE_URL);
     const updateQuery = "UPDATE USERS SET CITY_ID = ?, NAME = ?, SURNAME = ?, FATHER_NAME = ?, GENDER = ?, DOB = ?, MOBILE_NUMBER = ?, ALTERNATE_NUMBER = ?, EMAIL = ?, ROLE = ?, ADDRESS = ?, STATUS = ?, IMAGE_URL = ?, UPDATED_BY = ? WHERE USER_ID = ?";
-    const params = [ input.CITY_ID, input.NAME, input.SURNAME, input.FATHER_NAME, input.GENDER, input.DOB, input.MOBILE_NUMBER, input.ALTERNATE_NUMBER, input.EMAIL, input.ROLE, input.ADDRESS, input.STATUS, image_url, input.CREATED_BY, input.USER_ID ];
+    const params = [ input.CITY_ID, input.NAME, input.SURNAME, input.FATHER_NAME, input.GENDER, input.DOB, input.MOBILE_NUMBER, input.ALTERNATE_NUMBER, input.EMAIL, input.ROLE, input.ADDRESS, input.STATUS, image_url, userId, input.USER_ID ];
     try {
       const result = await executeDbQuery(updateQuery, params, true, apiName, port);
       const results = {message: "User updated"}
@@ -240,6 +242,7 @@ class UserController {
   async createRole(req: Request, res: Response) {
     const apiName = "role/create";
     const port = req.socket.localPort!;
+    const userId = req.headers["userid"] || "";
     const input = req.body;
     let connection;
     try {
@@ -261,7 +264,7 @@ class UserController {
         input.ROLE_NAME,
         input.DESCRIPTION,
         input.STATUS,
-        input.CREATED_BY,
+        userId,
       ];
       const result = await executeDbQuery(
         insertQuery,
@@ -302,6 +305,7 @@ try{
   async updateRole(req: Request, res: Response) {
     const apiName = "role/update";
     const port = req.socket.localPort!;
+    const userId = req.headers["userid"] || "";
     const input = req.body;
     const query = `UPDATE ROLES SET CITY_ID = ?, ROLE_NAME = ?, DESCRIPTION = ?, STATUS = ?, EDITED_BY = ? WHERE ROLE_ID = ?`;
     const params = [
@@ -309,7 +313,7 @@ try{
       input.ROLE_NAME,
       input.DESCRIPTION,
       input.STATUS,
-      input.CREATED_BY,
+      userId,
       input.ROLE_ID,
     ];
     try {

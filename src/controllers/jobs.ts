@@ -18,6 +18,7 @@ export default class JobsController {
   async createJob(req: Request, res: Response): Promise<void> {
     const apiName = "job/create";
     const port = req.socket.localPort!;
+    const userId = req.headers["userid"] || "";
     const input = req.body;
     let connection: any;
     try {
@@ -44,7 +45,7 @@ export default class JobsController {
 
       // Insert the new job record into the JOBS table.
       const insertQuery = ` INSERT INTO JOBS ( CITY_ID, JOB_ID, JOB_TITLE, DESCRIPTION, JOB_TYPE, EXPERIENCE, SKILLS, LAST_DATE, COMP_NM, MOBILE, EMAIL, WEBSITE, PACKAGE, COMP_ADDRESS, STATUS, IMAGE_URL, CREATED_BY ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) `;
-      const params = [ input.CITY_ID, newId, input.DESCRIPTION, input.JOB_TITLE, input.JOB_TYPE, input.EXPERIENCE, input.SKILLS, input.LAST_DATE, input.COMP_NM, input.MOBILE, input.EMAIL, input.WEBSITE, input.PACKAGE, input.COMP_ADDRESS, input.STATUS, image_url, input.CREATED_BY];
+      const params = [ input.CITY_ID, newId, input.DESCRIPTION, input.JOB_TITLE, input.JOB_TYPE, input.EXPERIENCE, input.SKILLS, input.LAST_DATE, input.COMP_NM, input.MOBILE, input.EMAIL, input.WEBSITE, input.PACKAGE, input.COMP_ADDRESS, input.STATUS, image_url, userId];
       const insertResult = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
       await connection.commit();
       const results = {message: "Job created", jobId: newId, affectedRows: insertResult.affectedRows};
@@ -88,6 +89,7 @@ export default class JobsController {
   async updateJob(req: Request, res: Response): Promise<void> {
     const apiName = "job/update";
     const port = req.socket.localPort!;
+    const userId = req.headers["userid"] || "";
     const input = req.body;
     let connection: any;
     try {
@@ -98,7 +100,7 @@ export default class JobsController {
       const image_url = await uploadImage(input.IMAGE_URL);
       // Update the job record.
       const updateQuery = ` UPDATE JOBS SET CITY_ID = ?, JOB_TITLE=?, DESCRIPTION = ?, JOB_TYPE = ?, EXPERIENCE = ?, SKILLS = ?, LAST_DATE = ?, COMP_NM = ?, MOBILE = ?, EMAIL = ?, WEBSITE = ?, PACKAGE = ?, COMP_ADDRESS = ?, STATUS = ?, IMAGE_URL = ?, EDITED_BY = ? WHERE JOB_ID = ? `;
-      const params = [ input.CITY_ID, input.JOB_TITLE, input.DESCRIPTION, input.JOB_TYPE, input.EXPERIENCE, input.SKILLS, input.LAST_DATE, input.COMP_NM, input.MOBILE, input.EMAIL, input.WEBSITE, input.PACKAGE, input.COMP_ADDRESS, input.STATUS, image_url, input.CREATED_BY, input.JOB_ID, ];
+      const params = [ input.CITY_ID, input.JOB_TITLE, input.DESCRIPTION, input.JOB_TYPE, input.EXPERIENCE, input.SKILLS, input.LAST_DATE, input.COMP_NM, input.MOBILE, input.EMAIL, input.WEBSITE, input.PACKAGE, input.COMP_ADDRESS, input.STATUS, image_url, userId, input.JOB_ID, ];
       await executeDbQuery(updateQuery, params, true, apiName, port, connection);
       await connection.commit();
       const results = {message: "Job updated"};
