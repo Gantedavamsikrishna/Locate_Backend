@@ -267,10 +267,8 @@ async createBusinessProfile(req: Request, res: Response) {
       return;
     }
 
-    // const rows = await executeDbQuery("SELECT MAX(CAST(SUB_SERVICE_ID AS UNSIGNED)) AS maxId FROM BUSSINESS_PROFILE", [], false, apiName, port, connection);
-    // const newId = (Number(rows[0]?.maxId || 0) + 1).toString().padStart(4, '0');
-const rows = await executeDbQuery("SELECT MAX(CAST(BUSINESS_ID AS UNSIGNED)) AS maxId FROM BUSSINESS_PROFILE", [], false, apiName, port, connection);
-const newId = (Number(rows[0]?.maxId || 0) + 1).toString().padStart(4, '0');
+    const rows = await executeDbQuery("SELECT MAX(CAST(BUSINESS_ID AS UNSIGNED)) AS maxId FROM BUSSINESS_PROFILE", [], false, apiName, port, connection);
+    const newId = (Number(rows[0]?.maxId || 0) + 1).toString().padStart(4, '0');
 
     const image_url1 = await uploadImage(input.IMAGE_URL1);
     const image_url2 = await uploadImage(input.IMAGE_URL2);

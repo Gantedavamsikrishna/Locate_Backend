@@ -90,6 +90,9 @@ export default class NewsFeedController {
     const port = req.socket.localPort!;
     const input = req.body;
      let connection: any;
+     if(!input.CITY_ID){
+      input.CITY_ID='101'
+     }
     connection = await pool.getConnection();
     await connection.beginTransaction();
     // Duplicate check: count rows where FEED_HEAD and FEED_MATTER match.
@@ -102,8 +105,8 @@ export default class NewsFeedController {
     }
 
     const image_url = await uploadImage(input.IMAGE_URL);
-    const updateQuery = ` UPDATE NEWS_FEED SET CITY_ID = ?, FEED_HEAD = ?, FEED_MATTER = ?, IMAGE_URL = ?, FEED_DATE = ?, STATUS = ?, EDITED_BY = ? WHERE FEED_ID = ? `;
-    const params = [ input.CITY_ID, input.FEED_HEAD, input.FEED_MATTER, image_url, input.FEED_DATE, input.STATUS, input.CREATED_BY, input.FEED_ID ];
+    const updateQuery = ` UPDATE NEWS_FEED SET CITY_ID = ?, FEED_HEAD = ?, FEED_MATTER = ?, IMAGE_URL = ?, FEED_DATE = ?,  EDITED_BY = ? WHERE FEED_ID = ? `;
+    const params = [ input.CITY_ID, input.FEED_HEAD, input.FEED_MATTER, image_url, input.FEED_DATE, input.CREATED_BY, input.FEED_ID ];
 
     try {
       const result = await executeDbQuery(updateQuery, params, true, apiName, port);
