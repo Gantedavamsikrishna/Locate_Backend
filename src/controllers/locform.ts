@@ -40,7 +40,7 @@ export default class NearLocationController {
       const images = [];
       for (let i = 1; i <= 10; i++) {
         const url = input[`IMAGE_URL${i}`];
-        images.push(url ? await uploadImage(url) : null);
+        images.push(url ? await uploadImage(url) : "");
       }
 
       const insertQuery = `INSERT INTO NEAR_LOCATION (CITY_ID, LOCAT_ID, LOCAT_NAME, OVERVIEW, BEST_TIME, ATTRACTIONS, ACCESSIBILITY, IMAGE_URL1, IMAGE_URL2, IMAGE_URL3, IMAGE_URL4, IMAGE_URL5, IMAGE_URL6, IMAGE_URL7, IMAGE_URL8, IMAGE_URL9, IMAGE_URL10, STATUS, CREATED_BY) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
