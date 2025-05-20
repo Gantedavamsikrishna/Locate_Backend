@@ -30,7 +30,7 @@ export default class ServiceController {
     
   }
   async Servicesnames(req: Request, res: Response) {
-    const apiName = "service/read-all";
+    const apiName = "service/Servicesnames";
     const port = req.socket.localPort!;
     // console.log('headers is',headers);
     
@@ -44,7 +44,7 @@ export default class ServiceController {
     }
   }
  async SubServicesnames(req: Request, res: Response) {
-    const apiName = "subservice/read-all";
+    const apiName = "subservice/SubServicesnames";
     const port = req.socket.localPort!;
     const input = req.query;
 

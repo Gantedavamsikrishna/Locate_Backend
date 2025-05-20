@@ -108,7 +108,7 @@ export default class NewsFeedController {
 
     const image_url = await uploadImage(input.IMAGE_URL);
     const updateQuery = ` UPDATE NEWS_FEED SET CITY_ID = ?, FEED_HEAD = ?, FEED_MATTER = ?, IMAGE_URL = ?, FEED_DATE = ?,  EDITED_BY = ? WHERE FEED_ID = ? `;
-    const params = [ input.CITY_ID, input.FEED_HEAD, input.FEED_MATTER, image_url, input.FEED_DATE, input.CREATED_BY, userId ];
+    const params = [ input.CITY_ID, input.FEED_HEAD, input.FEED_MATTER, image_url, input.FEED_DATE, userId,  input.FEED_ID];
 
     try {
       const result = await executeDbQuery(updateQuery, params, true, apiName, port);
