@@ -12,10 +12,15 @@ cloudinary.config({
 });
 
 export async function uploadImage(imagePath: string): Promise<string> {
+  let stringurl='https://res.cloudinary.com';
   if (!imagePath || imagePath.trim() === "") {
     return "";
   }
   try {
+    // let imagePathurl= imagePath.substr(0,26);
+    if(stringurl=imagePath.substr(0,26)){
+      return imagePath
+    }
     const result = await cloudinary.uploader.upload(imagePath);
     return result.secure_url;
   } catch (error:any) {

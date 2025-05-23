@@ -44,7 +44,7 @@ export default class JobsController {
       const image_url = await uploadImage(input.IMAGE_URL);
 
       // Insert the new job record into the JOBS table.
-      const insertQuery = ` INSERT INTO JOBS ( CITY_ID, JOB_ID, JOB_TITLE, DESCRIPTION, JOB_TYPE, EXPERIENCE, SKILLS, LAST_DATE, COMP_NM, MOBILE, EMAIL, WEBSITE, PACKAGE, COMP_ADDRESS, STATUS, IMAGE_URL, CREATED_BY ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) `;
+      const insertQuery = ` INSERT INTO JOBS ( CITY_ID, JOB_ID,DESCRIPTION, JOB_TITLE,  JOB_TYPE, EXPERIENCE, SKILLS, LAST_DATE, COMP_NM, MOBILE, EMAIL, WEBSITE, PACKAGE, COMP_ADDRESS, STATUS, IMAGE_URL, CREATED_BY ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) `;
       const params = [ input.CITY_ID, newId, input.DESCRIPTION, input.JOB_TITLE, input.JOB_TYPE, input.EXPERIENCE, input.SKILLS, input.LAST_DATE, input.COMP_NM, input.MOBILE, input.EMAIL, input.WEBSITE, input.PACKAGE, input.COMP_ADDRESS, input.STATUS, image_url, userId];
       const insertResult = await executeDbQuery(insertQuery, params, false, apiName, port, connection);
       await connection.commit();
