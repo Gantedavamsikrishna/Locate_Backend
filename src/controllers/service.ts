@@ -103,7 +103,7 @@ export default class ServiceController {
     const port = req.socket.localPort!;
     // console.log('headers is',headers);
     
-    const query = ` SELECT CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, DATE_FORMAT(CREATED_AT, '%d/%m/%Y %H:%i') AS CREATED_ON, UPDATED_BY, DATE_FORMAT(UPDATED_AT, '%d/%m/%Y %H:%i') AS EDITED_ON FROM SERVICES `;
+    const query = ` SELECT CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, EDITED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM SERVICES `;
 
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
@@ -117,7 +117,7 @@ export default class ServiceController {
     const apiName = "service/read";
     const port = req.socket.localPort!;
     const id = req.query.id || "";
-    const query = ` SELECT CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, DATE_FORMAT(CREATED_AT, '%d/%m/%Y %H:%i') AS CREATED_ON, UPDATED_BY, DATE_FORMAT(UPDATED_AT, '%d/%m/%Y %H:%i') AS EDITED_ON FROM SERVICES WHERE ID = ? `;
+    const query = ` SELECT CITY_ID, ID, NAME, DESCRIPTION, IMAGE_URL, STATUS, CREATED_BY, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, EDITED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM SERVICES WHERE ID = ? `;
 
     try {
       const rows = await executeDbQuery(query, [id], false, apiName, port);
@@ -137,7 +137,7 @@ export default class ServiceController {
     await connection.beginTransaction();
 
     const image_url = await uploadImage(input.IMAGE_URL);
-    const query = ` UPDATE SERVICES SET  NAME = ?, DESCRIPTION = ?, IMAGE_URL = ?, STATUS = ?, UPDATED_BY = ? WHERE ID = ? `;
+    const query = ` UPDATE SERVICES SET  NAME = ?, DESCRIPTION = ?, IMAGE_URL = ?, STATUS = ?, EDITED_BY = ? WHERE ID = ? `;
     const params = [ input.NAME, input.DESCRIPTION, image_url, input.STATUS, userId, input.ID];
 
     try {

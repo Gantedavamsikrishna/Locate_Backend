@@ -97,14 +97,6 @@ export default class NewsFeedController {
      }
     connection = await pool.getConnection();
     await connection.beginTransaction();
-    // Duplicate check: count rows where FEED_HEAD and FEED_MATTER match.
-    const chekdup = `SELECT COUNT(*) as count FROM NEWS_FEED WHERE FEED_HEAD=? AND FEED_MATTER=?`;
-    const dupResult = await executeDbQuery(chekdup, [input.FEED_HEAD, input.FEED_MATTER], false, apiName, port, connection);
-    if (Number(dupResult[0]?.count) > 0) {
-      await connection.rollback();
-      res.json({ status: 2, result: "News feed already exists." });
-      return;
-    }
 
     const image_url = await uploadImage(input.IMAGE_URL);
     const updateQuery = ` UPDATE NEWS_FEED SET CITY_ID = ?, FEED_HEAD = ?, FEED_MATTER = ?, IMAGE_URL = ?, FEED_DATE = ?,  EDITED_BY = ? WHERE FEED_ID = ? `;

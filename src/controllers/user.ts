@@ -97,7 +97,7 @@ class UserController {
           const dupResult = await executeDbQuery(chekdup, [input.EMAIL, input.MOBILE_NUMBER], false, apiName, port, connection);
           if (Number(dupResult[0]?.count) > 0) {
               await connection.rollback();
-              res.status(409).json({ status: 2, result: "User already exists." });
+              res.json({ status: 2, result: "User already exists." });
               return;
           }
         
@@ -126,7 +126,7 @@ class UserController {
   async getAllUsers(req: Request, res: Response) {
     const apiName = "user/read-all";
     const port: number = req.socket?.localPort ?? 3000;
-    const query = "SELECT CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, DATE_FORMAT(CREATED_AT, '%d/%m/%Y %H:%i') AS CREATED_ON, UPDATED_BY, DATE_FORMAT(UPDATED_AT, '%d/%m/%Y %H:%i') AS EDITED_ON FROM USERS";
+    const query = "SELECT CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, EDITED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM USERS";
     try {
       const rows = await executeDbQuery(query, [], false, apiName, port);
       res.json({ status: 0, result: rows });
@@ -139,7 +139,7 @@ class UserController {
     const apiName = "user/read";
     const port: number = req.socket.localPort!;
     const id = req.query.id;
-    const query = "SELECT CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, DATE_FORMAT(CREATED_AT, '%d/%m/%Y %H:%i') AS CREATED_ON, UPDATED_BY, DATE_FORMAT(UPDATED_AT, '%d/%m/%Y %H:%i') AS EDITED_ON FROM USERS WHERE USER_ID = ?";
+    const query = "SELECT CITY_ID, USER_ID, NAME, SURNAME, FATHER_NAME, GENDER, DOB, MOBILE_NUMBER, ALTERNATE_NUMBER, EMAIL, ROLE, ADDRESS, STATUS, IMAGE_URL, CREATED_BY, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, EDITED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM USERS WHERE USER_ID = ?";
     try {
       const rows = await executeDbQuery(query, [id], false, apiName, port);
       res.json({ status: 0, result: rows });
@@ -158,7 +158,7 @@ class UserController {
       await connection.beginTransaction();
 
     const image_url = await uploadImage(input.IMAGE_URL);
-    const updateQuery = "UPDATE USERS SET CITY_ID = ?, NAME = ?, SURNAME = ?, FATHER_NAME = ?, GENDER = ?, DOB = ?, MOBILE_NUMBER = ?, ALTERNATE_NUMBER = ?, EMAIL = ?, ROLE = ?, ADDRESS = ?, STATUS = ?, IMAGE_URL = ?, UPDATED_BY = ? WHERE USER_ID = ?";
+    const updateQuery = "UPDATE USERS SET CITY_ID = ?, NAME = ?, SURNAME = ?, FATHER_NAME = ?, GENDER = ?, DOB = ?, MOBILE_NUMBER = ?, ALTERNATE_NUMBER = ?, EMAIL = ?, ROLE = ?, ADDRESS = ?, STATUS = ?, IMAGE_URL = ?, EDITED_BY = ? WHERE USER_ID = ?";
     const params = [ input.CITY_ID, input.NAME, input.SURNAME, input.FATHER_NAME, input.GENDER, input.DOB, input.MOBILE_NUMBER, input.ALTERNATE_NUMBER, input.EMAIL, input.ROLE, input.ADDRESS, input.STATUS, image_url, userId, input.USER_ID ];
     try {
       const result = await executeDbQuery(updateQuery, params, true, apiName, port);
@@ -200,7 +200,7 @@ class UserController {
 
 //   async getAllRoles(req: Request, res: Response) {
 //     const apiName = "role/read-all"; const port = req.socket.localPort!;
-//     const query = `SELECT CITY_ID, ROLE_ID, ROLE_NAME, DESCRIPTION, STATUS, DATE_FORMAT(CREATED_AT, '%d/%m/%Y %H:%i') AS CREATED_ON, CREATED_BY, DATE_FORMAT(UPDATED_AT, '%d/%m/%Y %H:%i') AS EDITED_ON, UPDATED_BY FROM ROLES`;
+//     const query = `SELECT CITY_ID, ROLE_ID, ROLE_NAME, DESCRIPTION, STATUS, DATE_FORMAT(CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, CREATED_BY, DATE_FORMAT(EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON, EDITED_BY FROM ROLES`;
 //     try {
 //       const rows = await executeDbQuery(query, [], false, apiName, port);
 //       res.json({ status: 0, result: rows });
@@ -223,8 +223,8 @@ class UserController {
 //               return;
 //           }
 
-//     const query = `UPDATE ROLES SET CITY_ID = ?, ROLE_NAME = ?, DESCRIPTION = ?, STATUS = ?, UPDATED_BY = ? WHERE ROLE_ID = ?`;
-//     const params = [input.CITY_ID, input.ROLE_NAME, input.DESCRIPTION, input.STATUS, input.UPDATED_BY, input.ROLE_ID];
+//     const query = `UPDATE ROLES SET CITY_ID = ?, ROLE_NAME = ?, DESCRIPTION = ?, STATUS = ?, EDITED_BY = ? WHERE ROLE_ID = ?`;
+//     const params = [input.CITY_ID, input.ROLE_NAME, input.DESCRIPTION, input.STATUS, input.EDITED_BY, input.ROLE_ID];
 //     try {
 //       const result = await executeDbQuery(query, params, true, apiName, port);
 //       const results = {message: "Role updated"};
@@ -248,6 +248,15 @@ class UserController {
     try {
       connection = await pool.getConnection();
       await connection.beginTransaction();
+
+          const chekdup = ` SELECT COUNT(*) as count FROM ROLES WHERE ROLE_NAME=? AND DESCRIPTION=?`;
+          const dupResult = await executeDbQuery(chekdup, [input.ROLE_NAME, input.DESCRIPTION], false, apiName, port, connection);
+          if (Number(dupResult[0]?.count) > 0) {
+              await connection.rollback();
+              res.json({ status: 2, result: "Role already exists." });
+              return;
+          }
+
       const maxIdResult = await executeDbQuery(
         "SELECT IFNULL(MAX(ROLE_ID), 1110) AS maxId FROM ROLES",
         [],
