@@ -88,12 +88,21 @@ class UserController {
     const apiName = "user/changepass";
     const port: number = req.socket.localPort!;
     let input=req.body;
+    const userId = req.headers["userid"] || "";
     let connection: any;
     connection = await pool.getConnection();
       await connection.beginTransaction();
 
-    const updateQuery = "UPDATE USERS SET PASSWORD = ? WHERE EMAIL = ?";
-    const params = [ input.PASSWORD, input.EMAIL ];
+      const chekdup = `SELECT COUNT(*) as count FROM USERS WHERE EMAIL = ? AND PASSWORD = ? AND USER_ID = ?`;
+          const dupResult = await executeDbQuery(chekdup, [input.EMAIL, input.OLD_PASSWORD, userId], false, apiName, port, connection);
+          if (Number(dupResult[0]?.count) == 0) {
+              await connection.rollback();
+              res.json({ status: 2, result: "Invalid Credentials." });
+              return;
+          }
+
+    const updateQuery = "UPDATE USERS SET PASSWORD = ? WHERE EMAIL = ? AND USER_ID = ?";
+    const params = [ input.NEW_PASSWORD, input.EMAIL, userId ];
     try {
       const result = await executeDbQuery(updateQuery, params, true, apiName, port);
       const results = {message: "Password updated"}
