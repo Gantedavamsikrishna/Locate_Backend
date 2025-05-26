@@ -19,6 +19,7 @@ class UserController {
     this.router.put("/users", this.updateUser.bind(this));
     this.router.post("/users", this.createUser.bind(this));
     this.router.post("/login", this.Login.bind(this));
+    this.router.put("/changepass", this.changePass.bind(this));
 
     this.router.get("/roles", this.getAllRoles.bind(this));
     this.router.put("/roles", this.updateRole.bind(this));
@@ -80,6 +81,25 @@ class UserController {
       }
     } catch (err: any) {
       Response.json({ status: 1, result: err.toString() });
+    }
+  }
+
+  async changePass(req: Request, res: Response) {
+    const apiName = "user/changepass";
+    const port: number = req.socket.localPort!;
+    let input=req.body;
+    let connection: any;
+    connection = await pool.getConnection();
+      await connection.beginTransaction();
+
+    const updateQuery = "UPDATE USERS SET PASSWORD = ? WHERE EMAIL = ?";
+    const params = [ input.PASSWORD, input.EMAIL ];
+    try {
+      const result = await executeDbQuery(updateQuery, params, true, apiName, port);
+      const results = {message: "Password updated"}
+      res.json({ status: 0, result:results });
+    } catch (err: any) {
+      res.json({ status: 1, result: err.toString() });
     }
   }
 
