@@ -9,7 +9,7 @@ export default class ServiceController {
   constructor(app: Application) {
     app.use("/api/service", this.router);
 
-    this.router.get("/services", this.getAllServices.bind(this));
+    this.router.get("/services", authenticateToken as any,this.getAllServices.bind(this));
     this.router.get("/servicesbyid", this.getServiceById.bind(this));
     this.router.put("/services", this.updateService.bind(this));
     this.router.post("/services", this.createService.bind(this));
@@ -296,7 +296,7 @@ async getAllBusinessProfiles(req: Request, res: Response) {
   const apiName = "businessprofile/read-all";
   const port = req.socket.localPort!;
 
-  const query = `SELECT B.CITY_ID, B.SERVICE_ID, S.NAME SERVICE, B.SUB_SERVICE_ID, SUB.NAME AS SUB_SERVICE, B.BUSINESS_ID, B.BUSINESS_NAME, B.OWNER_NAME, B.BUSINESS_TYPE, B.MOBILE, B.ADDRESS, B.WEEKDAY_TIMINGS, B.SUNDAY_TIMINGS, B.WEBSITE_URL, B.EMAIL, B.DESCRIPTION, B.LATITUDE, B.LONGITUDE, B.DEFAULT_CONTACT, B.IMAGE_URL1, B.IMAGE_URL2, B.IMAGE_URL3, B.IMAGE_URL4, B.IMAGE_URL5, B.STATUS, B.CREATED_BY, DATE_FORMAT(B.CREATED_ON, '%d/%m/%Y %H:%i') AS CREATED_ON, B.EDITED_BY, DATE_FORMAT(B.EDITED_ON, '%d/%m/%Y %H:%i') AS EDITED_ON FROM BUSSINESS_PROFILE B LEFT JOIN SERVICES S ON S.ID=B.SERVICE_ID LEFT JOIN SUB_SERVICES SUB ON SUB.SUB_SERVICE_ID=B.SUB_SERVICE_ID`;
+  const query = `SELECT  B.SERVICE_ID, S.NAME SERVICE, B.SUB_SERVICE_ID, SUB.NAME AS SUB_SERVICE, B.BUSINESS_ID, B.BUSINESS_NAME, B.OWNER_NAME, B.BUSINESS_TYPE, B.MOBILE, B.ADDRESS, B.WEEKDAY_TIMINGS, B.SUNDAY_TIMINGS, B.WEBSITE_URL, B.EMAIL, B.DESCRIPTION, B.LATITUDE, B.LONGITUDE, B.DEFAULT_CONTACT, B.IMAGE_URL1, B.IMAGE_URL2, B.IMAGE_URL3, B.IMAGE_URL4, B.IMAGE_URL5, B.STATUS  FROM BUSSINESS_PROFILE B LEFT JOIN SERVICES S ON S.ID=B.SERVICE_ID LEFT JOIN SUB_SERVICES SUB ON SUB.SUB_SERVICE_ID=B.SUB_SERVICE_ID`;
 
   try {
     const rows = await executeDbQuery(query, [], false, apiName, port);

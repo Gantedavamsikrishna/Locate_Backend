@@ -6,8 +6,11 @@ import  jwt  from "jsonwebtoken";
 import { authenticateToken } from "../middleWare/authMiddleWare";
 
 //token
-const secretKey =
-  (process.env.ACCESS_TOKEN_KEY as string) || "'your_secret_key";
+// const secretKey =(process.env.ACCESS_TOKEN_KEY as string) || "'your_secret_key";
+//   const secretKeyRefresh =(process.env.REFRESH_TOKEN_KEY as string) || "'your_secret_key_refresh";
+const secretKey = process.env.ACCESS_TOKEN_KEY || 'Y6u$3vZq!7LqFg#29xVrE!8TmQpLuR1C';
+const secretKeyRefresh = process.env.REFRESH_TOKEN_KEY || 'J9p@WmZx*3BtRh$12qNsTy^Xz7KvOc5D';
+
 class UserController {  
   public router = express.Router();
 
@@ -24,6 +27,8 @@ class UserController {
     this.router.get("/roles", this.getAllRoles.bind(this));
     this.router.put("/roles", this.updateRole.bind(this));
     this.router.post("/roles", this.createRole.bind(this));
+    
+    this.router.post("/refresh-token", this.refreshToken.bind(this));
   }
 
   // async Login(Request: Request, Response: Response) {
@@ -47,6 +52,38 @@ class UserController {
   //     Response.json({ status: 1, result: err.toString()});
   //   }
   // }
+  refreshToken(req: Request, res: Response) {
+    const refreshToken = req.body?.refreshToken;
+
+    if (!refreshToken) {
+      res.status(401).json({ status: 1, message: "Refresh token missing" });
+      return;
+    }
+
+    try {
+      const decoded = jwt.verify(refreshToken, secretKeyRefresh) as any;
+
+      const newAccessToken = jwt.sign(
+        { userId: decoded.userId, role: decoded.role },
+        secretKey,
+        { algorithm: "HS256", expiresIn: "10m" }
+      );
+
+      const newRefreshToken = jwt.sign(
+        { userId: decoded.userId, role: decoded.role },
+        secretKeyRefresh,
+        { algorithm: "HS256", expiresIn: "7d" }
+      );
+
+      res.json({
+        status: 0,
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      });
+    } catch (error) {
+      res.status(403).json({ status: 1, message: "Invalid refresh token" });
+    }
+  };
   async Login(Request: Request, Response: Response) {
     const apiName = "user/Login";
     // console.log(secretKey);
@@ -68,13 +105,17 @@ class UserController {
         const accessToken = jwt.sign(
           { userId: user.USER_ID, role: user.ROLE_NAME },
           secretKey,
-          { expiresIn: "50m" }
+          { algorithm: "HS256", expiresIn: "1m" }
         );
-
+ const refreshToken = jwt.sign(
+          { userId: user.USER_ID, role: user.ROLE_NAME },
+          secretKeyRefresh,
+          { algorithm: "HS256", expiresIn: "7d" }
+        );
         Response.json({
           status: 0,
           message: "login success",
-          accessToken,result:result
+          accessToken,refreshToken,result:result
         });
       } else {
         Response.json({ status: 2, result: { message: "user not found" } });
